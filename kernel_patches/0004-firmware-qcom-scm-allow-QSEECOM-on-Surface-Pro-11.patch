@@ -1,0 +1,27 @@
+From e5987367690888bf5557717e1fdabb635fbd8f54 Mon Sep 17 00:00:00 2001
+From: Dale Whinham <daleyo@gmail.com>
+Date: Thu, 23 Jan 2025 15:21:24 +0000
+Subject: [PATCH 4/5] firmware: qcom: scm: allow QSEECOM on Surface Pro 11
+
+Enables access to EFI variables on this machine.
+
+Signed-off-by: Dale Whinham <daleyo@gmail.com>
+---
+ drivers/firmware/qcom/qcom_scm.c | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/drivers/firmware/qcom/qcom_scm.c b/drivers/firmware/qcom/qcom_scm.c
+index 0bdfe64a0ff0..558733e8ba57 100644
+--- a/drivers/firmware/qcom/qcom_scm.c
++++ b/drivers/firmware/qcom/qcom_scm.c
+@@ -1775,6 +1775,7 @@ static const struct of_device_id qcom_scm_qseecom_allowlist[] __maybe_unused = {
+ 	{ .compatible = "lenovo,thinkpad-x13s", },
+ 	{ .compatible = "lenovo,yoga-slim7x" },
+ 	{ .compatible = "microsoft,arcata", },
++	{ .compatible = "microsoft,denali", },
+ 	{ .compatible = "microsoft,romulus13", },
+ 	{ .compatible = "microsoft,romulus15", },
+ 	{ .compatible = "qcom,sc8180x-primus" },
+-- 
+2.48.1
+

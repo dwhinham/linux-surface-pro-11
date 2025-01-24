@@ -1,0 +1,43 @@
+From 7f348af4bf83e913ecac7de209f1fcbbc94cdc3f Mon Sep 17 00:00:00 2001
+From: Dale Whinham <daleyo@gmail.com>
+Date: Wed, 22 Jan 2025 00:48:53 +0000
+Subject: [PATCH 2/5] drm/msm/dp: work around bogus maximum link rate
+
+The OLED display in the Surface Pro 11 reports a maximum link rate of
+zero in its DPCD, causing it to fail to probe correctly.
+
+The Surface Pro 11's DSDT table contains some XML with an
+"EDPOverrideDPCDCaps" block that defines the max link rate as 0x1E
+(8.1Gbps/HBR3).
+
+Hack around this by conditionally overriding the max link rate if its
+value is zero.
+
+Signed-off-by: Dale Whinham <daleyo@gmail.com>
+---
+ drivers/gpu/drm/msm/dp/dp_panel.c | 9 +++++++++
+ 1 file changed, 9 insertions(+)
+
+diff --git a/drivers/gpu/drm/msm/dp/dp_panel.c b/drivers/gpu/drm/msm/dp/dp_panel.c
+index 5d7eaa31bf31..4f4af0b27785 100644
+--- a/drivers/gpu/drm/msm/dp/dp_panel.c
++++ b/drivers/gpu/drm/msm/dp/dp_panel.c
+@@ -58,6 +58,15 @@ static int msm_dp_panel_read_dpcd(struct msm_dp_panel *msm_dp_panel)
+ 	if (rc)
+ 		return rc;
+ 
++	/*
++	 * HACK: for some reason the ATNA30DW01-1 OLED panel in the Surface Pro 11
++	 * reports a max link rate of 0 in the DPCD - fix it to match the
++	 * EDPOverrideDPCDCaps string found in the ACPI DSDT
++	 */
++	if (dpcd[DP_MAX_LINK_RATE] == 0) {
++		dpcd[1] = DP_LINK_BW_8_1;
++	}
++
+ 	msm_dp_panel->vsc_sdp_supported = drm_dp_vsc_sdp_supported(panel->aux, dpcd);
+ 	link_info = &msm_dp_panel->link_info;
+ 	link_info->revision = dpcd[DP_DPCD_REV];
+-- 
+2.48.1
+

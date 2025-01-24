@@ -1,0 +1,33 @@
+From 774c86dbfc2b12281bca6f1d801a47f0c0e59916 Mon Sep 17 00:00:00 2001
+From: Dale Whinham <daleyo@gmail.com>
+Date: Wed, 22 Jan 2025 00:38:15 +0000
+Subject: [PATCH 1/5] drm/msm/dp: raise maximum pixel clock frequency
+
+The ATNA30DW01 OLED panel in the Surface Pro 11 specifies detailed
+timings with a pixel clock in excess of 712MHz and a panel maximum of
+720MHz in its EDID.
+
+Allow this panel's full range to be used by raising the maximum
+DisplayPort pixel clock.
+
+Signed-off-by: Dale Whinham <daleyo@gmail.com>
+---
+ drivers/gpu/drm/msm/dp/dp_display.h | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/drivers/gpu/drm/msm/dp/dp_display.h b/drivers/gpu/drm/msm/dp/dp_display.h
+index ecbc2d92f546..f974f36f6fda 100644
+--- a/drivers/gpu/drm/msm/dp/dp_display.h
++++ b/drivers/gpu/drm/msm/dp/dp_display.h
+@@ -10,7 +10,7 @@
+ #include <sound/hdmi-codec.h>
+ #include "disp/msm_disp_snapshot.h"
+ 
+-#define DP_MAX_PIXEL_CLK_KHZ	675000
++#define DP_MAX_PIXEL_CLK_KHZ	720000
+ 
+ struct msm_dp {
+ 	struct drm_device *drm_dev;
+-- 
+2.48.1
+
