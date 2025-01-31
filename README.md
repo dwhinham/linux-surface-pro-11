@@ -1,26 +1,27 @@
 # Linux on the Surface Pro 11
 
-These are my patches and notes for getting [Arch Linux ARM](https://archlinuxarm.org) booting on the Microsoft Surface Pro 11.
+These are my notes for getting [Arch Linux ARM](https://archlinuxarm.org) booting on the Microsoft Surface Pro 11.
+The [kernel tree can be found here](https://github.com/dwhinham/kernel-surface-pro-11).
 
 **Disclaimer:** I have no experience with upstreaming patches, the patch review process, Linux coding conventions, etc. **at all**, so for now I'm just documenting everything here in the hope that more knowledgable people can help!
 
 ## What's working
 
-|        **Feature**        | **Working?** |                                                                    **Notes**                                                                   |
-|:-------------------------:|:------------:|:----------------------------------------------------------------------------------------------------------------------------------------------:|
-| NVMe                      |       ✅      |                                                                                                                                                |
-| Graphics                  |       ✅      | Haven't tested 3D acceleration properly yet, but Hyprland works.                                                                               |
-| Backlight                 |       ✅      | Can be adjusted via `/sys/class/backlight/dp_aux_backlight/brightness`                                                                         |
-| USB                       |   Partially  | USB-C ports are working, but Surface Dock connector is presumably not. USB devices must be inserted before boot or they may not be recognized. |
-| USB-C display output      |       ❓      |                                                                                                                                                |
-| Wi-Fi                     |       ❌      | ath12k can be probed with the correct firmware in place, but `rfkill` shows that it is hard-blocked (help needed!).                            |
-| Bluetooth                 |       ❌      |                                                                                                                                                |
-| Audio                     |       ❌      | Should be similar to Surface Laptop 7.                                                                                                         |
-| Touchscreen               |       ❌      |                                                                                                                                                |
-| Pen                       |       ❌      |                                                                                                                                                |
-| Flex Keyboard             |       ✅      | Only when attached to the Surface Pro; no Bluetooth yet.                                                                                       |
-| Lid switch/suspend        |       ✅      | Seems to be working.                                                                                                                           |
-| Cameras (and status LEDs) |       ❌      |                                                                                                                                                |
+| **Feature**               | **Working?** | **Notes**                                                                                                                                                  |
+|---------------------------|:------------:|------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| NVMe                      |       ✅      |                                                                                                                                                            |
+| Graphics                  |       ✅      | Haven't tested 3D acceleration properly yet, but Hyprland works.                                                                                           |
+| Backlight                 |       ✅      | Can be adjusted via `/sys/class/backlight/dp_aux_backlight/brightness`                                                                                     |
+| USB                       |   Partially  | USB-C ports are working, but Surface Dock connector is presumably not. USB devices must be inserted before boot or they may not be recognized.             |
+| USB-C display output      |       ❓      |                                                                                                                                                            |
+| Wi-Fi                     |       ❌      | ath12k can be probed with the correct firmware in place, but `rfkill` shows that it is hard-blocked (help needed!).                                        |
+| Bluetooth                 |       ✅      | Requires some `udev` rules to set up a valid MAC address, see [Debian wiki](https://wiki.debian.org/InstallingDebianOn/Thinkpad/X13s#Wi-Fi_and_Bluetooth). |
+| Audio                     |       ❌      | Should be similar to Surface Laptop 7.                                                                                                                     |
+| Touchscreen               |       ❌      |                                                                                                                                                            |
+| Pen                       |       ❌      |                                                                                                                                                            |
+| Flex Keyboard             |       ✅      | Only when attached to the Surface Pro; not sure about Bluetooth yet.                                                                                       |
+| Lid switch/suspend        |       ✅      | Seems to be working.                                                                                                                                       |
+| Cameras (and status LEDs) |       ❌      |                                                                                                                                                            |
 
 ## Arch Linux ARM disk image
 
@@ -65,35 +66,35 @@ The script performs the following:
 
 ## Kernel
 
-The kernel used as a base is [@jhovold's X1E80100 kernel](https://github.com/jhovold/linux) which contains many bleeding-edge patches for machines using Qualcomm X1E SoCs.
+The [kernel](https://github.com/dwhinham/kernel-surface-pro-11) is based on [@jhovold's X1E80100 kernel](https://github.com/jhovold/linux), which contains many bleeding-edge patches for machines using Qualcomm X1E SoCs.
 
-### Patches
+### Notable patches
 
-- [drm/msm/dp: raise maximum pixel clock frequency](kernel_patches/0001-drm-msm-dp-raise-maximum-pixel-clock-frequency.patch)
+- [drm/msm/dp: raise maximum pixel clock frequency](https://github.com/dwhinham/kernel-surface-pro-11/commit/774c86dbfc2b12281bca6f1d801a47f0c0e59916)
 
   The EDID of the Surface's OLED panel requests a higher pixel clock than is currently allowed by the DisplayPort driver, so this patch bumps it up a bit[^1].
 
-- [drm/msm/dp: work around bogus maximum link rate](kernel_patches/0002-drm-msm-dp-work-around-bogus-maximum-link-rate.patch):
+- [drm/msm/dp: work around bogus maximum link rate](https://github.com/dwhinham/kernel-surface-pro-11/commit/7f348af4bf83e913ecac7de209f1fcbbc94cdc3f):
 
   For some reason the DPCD (DisplayPort Configuration Data) contains a zero where a maximum link rate is expected, causing the panel to fail to probe. This patch is an ugly hack which simply hardcodes it to what it should be.
 
   Some kind of device tree-based override mechanism is probably needed to fix this cleanly, in the same way EDIDs can be overridden[^2].
 
-- [arm64: dts: qcom: add support for Surface Pro 11](kernel_patches/0003-arm64-dts-qcom-add-support-for-Surface-Pro-11.patch)
+- [arm64: dts: qcom: add support for Surface Pro 11](https://github.com/dwhinham/kernel-surface-pro-11/commit/1e2d777856f63b774dbd0461ba02bceb705a1cf7)
 
   This patch introduces a device tree for the Surface Pro 11. It's nowhere near complete, but it's enough to get started.
 
-- [firmware: qcom: scm: allow QSEECOM on Surface Pro 11](kernel_patches/0004-firmware-qcom-scm-allow-QSEECOM-on-Surface-Pro-11.patch)
+- [firmware: qcom: scm: allow QSEECOM on Surface Pro 11](https://github.com/dwhinham/kernel-surface-pro-11/commit/01dd77a4e2e74f16a1e77ef5ec5ecccfa69caafc)
 
   Minor patch to whitelist the Surface Pro 11 and enable access to EFI variables through the QSEECOM driver (useful for setting up bootloaders etc).
 
-- [platform/surface: aggregator_registry: Add Surface Pro 11](kernel_patches/0005-platform-surface-aggregator_registry-Add-Surface-Pro.patch)
+- [platform/surface: aggregator_registry: Add Surface Pro 11](https://github.com/dwhinham/kernel-surface-pro-11/commit/18192d3093d78b7bf0bf671632ab68346f135d6c)
 
-  This patch enables the Surface Aggregator driver, which gets the Flex Keyboard working.
+  This patch enables the Surface Aggregator driver, which gets the Flex Keyboard working. It may be possible to remove this patch and add the SAM into the device tree instead.
 
 ### Device tree
 
-The device tree is mostly based on the [Surface Laptop 7](https://github.com/torvalds/linux/blob/master/arch/arm64/boot/dts/qcom/x1e80100-microsoft-romulus.dtsi) and [Qualcomm CRD](https://github.com/torvalds/linux/blob/master/arch/arm64/boot/dts/qcom/x1e80100-crd.dts) device trees as they share many similarities.
+The [device tree](https://github.com/dwhinham/kernel-surface-pro-11/blob/wip/x1e80100-6.13-sp11/arch/arm64/boot/dts/qcom/x1e80100-microsoft-denali.dts) is mostly based on the [Surface Laptop 7](https://github.com/torvalds/linux/blob/master/arch/arm64/boot/dts/qcom/x1e80100-microsoft-romulus.dtsi) and [Qualcomm CRD](https://github.com/torvalds/linux/blob/master/arch/arm64/boot/dts/qcom/x1e80100-crd.dts) device trees as they share many similarities.
 
 The values for the regulators in the `apps_rsc` section were found by scraping the [DSDT dump](https://github.com/aarch64-laptops/build/blob/master/misc/microsoft-surface-pro-11/acpi/dsdt.dsl) and looking for the sections that contain `PMICVREGVOTE`.
 
@@ -107,7 +108,7 @@ A script [`grab_fw.bat`](grab_fw.bat) is included on the disk image's FAT partit
 From Linux, you can then mount the EFI partition and copy the firmware to your system (e.g. `mount /dev/sda1 /mnt/efi; cp -r /mnt/efi/firmware/* /lib/firmware/`). **However, see the note below about aDSP.**
 
 | **Device** |                                                   **Source (Windows)**                                              |                    **Destination (Linux)**                    |
-|:----------:|:-------------------------------------------------------------------------------------------------------------------:|:-------------------------------------------------------------:|
+|------------|---------------------------------------------------------------------------------------------------------------------|---------------------------------------------------------------|
 | GPU        | `C:\Windows\System32\qcdxkmsuc8380.mbn`                                                                             | `/lib/firmware/qcom/x1e80100/microsoft/qcdxkmsuc8380.mbn`     |
 | Wi-Fi      | `C:\Windows\System32\DriverStore\FileRepository\qcwlanhmt8380.inf_arm64_b6e9acfd0d644720\wlanfw20.mbn`              | `/lib/firmware/ath12k/WCN7850/hw2.0/amss.bin`                 |
 | Wi-Fi      | `C:\Windows\System32\DriverStore\FileRepository\qcwlanhmt8380.inf_arm64_b6e9acfd0d644720\bdwlan_.elf`               | `/lib/firmware/ath12k/WCN7850/hw2.0/board.bin`                |

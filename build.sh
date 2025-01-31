@@ -126,22 +126,18 @@ function arch_setup {
 
 function build_kernel {
 	if [ ! -f build/boot/vmlinuz* ]; then
-		git clone https://github.com/jhovold/linux.git build/linux-jhovold --single-branch --branch wip/x1e80100-6.13 --depth 1
-	
-		for p in kernel_patches/*; do
-			git -C build/linux-jhovold apply < $p
-		done
+		git clone https://github.com/dwhinham/kernel-surface-pro-11 build/linux-sp11 --single-branch --branch wip/x1e80100-6.13-sp11 --depth 1
 
-		cp kernel_config build/linux-jhovold/.config
+		cp kernel_config build/linux-sp11/.config
 
 		mkdir -p build/boot build/modules
 		export INSTALL_PATH=../boot
 		export INSTALL_MOD_PATH=../modules
 
-		make -C build/linux-jhovold -j12
-		make -C build/linux-jhovold modules_install
-		make -C build/linux-jhovold dtbs_install
-		make -C build/linux-jhovold install
+		make -C build/linux-sp11 -j12
+		make -C build/linux-sp11 modules_install
+		make -C build/linux-sp11 dtbs_install
+		make -C build/linux-sp11 install
 	fi
 }
 
