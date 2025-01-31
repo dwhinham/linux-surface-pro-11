@@ -106,16 +106,16 @@ Firmware blobs that cannot be distributed here are needed from the stock Windows
 A script [`grab_fw.bat`](grab_fw.bat) is included on the disk image's FAT partition which you can run from Windows. This will collect all the firmware into a `firmware` folder on the root of the flash drive.
 From Linux, you can then mount the EFI partition and copy the firmware to your system (e.g. `mount /dev/sda1 /mnt/efi; cp -r /mnt/efi/firmware/* /lib/firmware/`). **However, see the note below about aDSP.**
 
-| **Device** |                                                   **Source (Windows)**                                                  |                    **Destination (Linux)**                    |
-|:----------:|:-----------------------------------------------------------------------------------------------------------------------:|:-------------------------------------------------------------:|
-| GPU        | `C:\Windows\System32\qcdxkmsuc8380.mbn`                                                                                 | `/lib/firmware/qcom/x1e80100/microsoft/qcdxkmsuc8380.mbn`     |
-| Wi-Fi      | `C:\Windows\System32\DriverStore\FileRepository\qcwlanhmt8380.inf_arm64_b6e9acfd0d644720\wlanfw20.mbn`                  | `/lib/firmware/ath12k/WCN7850/hw2.0/amss.bin`                 |
-| Wi-Fi      | `C:\Windows\System32\DriverStore\FileRepository\qcwlanhmt8380.inf_arm64_b6e9acfd0d644720\bdwlan_wcn785x_2p0_ncm825.elf` | `/lib/firmware/ath12k/WCN7850/hw2.0/board.bin`                |
-| Wi-Fi      | `C:\Windows\System32\DriverStore\FileRepository\qcwlanhmt8380.inf_arm64_b6e9acfd0d644720\phy_ucode20.elf`               | `/lib/firmware/ath12k/WCN7850/hw2.0/m3.bin`                   |
-| aDSP*       | `C:\Windows\System32\DriverStore\FileRepository\surfacepro_ext_adsp8380.inf_arm64_1067fbcaa7f43f02\adsp_dtbs.elf`       | `/lib/firmware/qcom/x1e80100/microsoft/Denali/adsp_dtb.mbn`   |
-| aDSP*       | `C:\Windows\System32\DriverStore\FileRepository\surfacepro_ext_adsp8380.inf_arm64_1067fbcaa7f43f02\qcadsp8380.mbn`      | `/lib/firmware/qcom/x1e80100/microsoft/Denali/qcadsp8380.mbn` |
-| cDSP       | `C:\Windows\System32\DriverStore\FileRepository\qcsubsys_ext_cdsp8380.inf_arm64_9ed31fd1359980a9\cdsp_dtbs.elf`         | `/lib/firmware/qcom/x1e80100/microsoft/Denali/cdsp_dtb.mbn`   |
-| cDSP       | `C:\Windows\System32\DriverStore\FileRepository\qcsubsys_ext_cdsp8380.inf_arm64_9ed31fd1359980a9\qccdsp8380.mbn`        | `/lib/firmware/qcom/x1e80100/microsoft/Denali/qccdsp8380.mbn` |
+| **Device** |                                                   **Source (Windows)**                                              |                    **Destination (Linux)**                    |
+|:----------:|:-------------------------------------------------------------------------------------------------------------------:|:-------------------------------------------------------------:|
+| GPU        | `C:\Windows\System32\qcdxkmsuc8380.mbn`                                                                             | `/lib/firmware/qcom/x1e80100/microsoft/qcdxkmsuc8380.mbn`     |
+| Wi-Fi      | `C:\Windows\System32\DriverStore\FileRepository\qcwlanhmt8380.inf_arm64_b6e9acfd0d644720\wlanfw20.mbn`              | `/lib/firmware/ath12k/WCN7850/hw2.0/amss.bin`                 |
+| Wi-Fi      | `C:\Windows\System32\DriverStore\FileRepository\qcwlanhmt8380.inf_arm64_b6e9acfd0d644720\bdwlan_.elf`               | `/lib/firmware/ath12k/WCN7850/hw2.0/board.bin`                |
+| Wi-Fi      | `C:\Windows\System32\DriverStore\FileRepository\qcwlanhmt8380.inf_arm64_b6e9acfd0d644720\phy_ucode20.elf`           | `/lib/firmware/ath12k/WCN7850/hw2.0/m3.bin`                   |
+| aDSP*       | `C:\Windows\System32\DriverStore\FileRepository\surfacepro_ext_adsp8380.inf_arm64_1067fbcaa7f43f02\adsp_dtbs.elf`  | `/lib/firmware/qcom/x1e80100/microsoft/Denali/adsp_dtb.mbn`   |
+| aDSP*       | `C:\Windows\System32\DriverStore\FileRepository\surfacepro_ext_adsp8380.inf_arm64_1067fbcaa7f43f02\qcadsp8380.mbn` | `/lib/firmware/qcom/x1e80100/microsoft/Denali/qcadsp8380.mbn` |
+| cDSP       | `C:\Windows\System32\DriverStore\FileRepository\qcsubsys_ext_cdsp8380.inf_arm64_9ed31fd1359980a9\cdsp_dtbs.elf`     | `/lib/firmware/qcom/x1e80100/microsoft/Denali/cdsp_dtb.mbn`   |
+| cDSP       | `C:\Windows\System32\DriverStore\FileRepository\qcsubsys_ext_cdsp8380.inf_arm64_9ed31fd1359980a9\qccdsp8380.mbn`    | `/lib/firmware/qcom/x1e80100/microsoft/Denali/qccdsp8380.mbn` |
 
 * **Note**: Having the aDSP firmware installed seems to cause USB disconnect/boot failure late on in boot, so I wouldn't use it until this has been debugged.
 
