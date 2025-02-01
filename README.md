@@ -14,7 +14,7 @@ The [kernel tree can be found here](https://github.com/dwhinham/kernel-surface-p
 | Backlight                 |       ✅      | Can be adjusted via `/sys/class/backlight/dp_aux_backlight/brightness`                                                                                     |
 | USB                       |   Partially  | USB-C ports are working, but Surface Dock connector is presumably not. USB devices must be inserted before boot or they may not be recognized.             |
 | USB-C display output      |       ❓      |                                                                                                                                                            |
-| Wi-Fi                     |       ❌      | ath12k can be probed with the correct firmware in place, but `rfkill` shows that it is hard-blocked (help needed!).                                        |
+| Wi-Fi                     |       ✅      | Working with a [kernel hack to disable rfkill](https://github.com/dwhinham/kernel-surface-pro-11/commit/fcc769be9eaa9823d55e98a28402104621fa6784).         |
 | Bluetooth                 |       ✅      | Requires some `udev` rules to set up a valid MAC address, see [Debian wiki](https://wiki.debian.org/InstallingDebianOn/Thinkpad/X13s#Wi-Fi_and_Bluetooth). |
 | Audio                     |       ❌      | Should be similar to Surface Laptop 7.                                                                                                                     |
 | Touchscreen               |       ❌      |                                                                                                                                                            |
@@ -91,6 +91,10 @@ The [kernel](https://github.com/dwhinham/kernel-surface-pro-11) is based on [@jh
 - [platform/surface: aggregator_registry: Add Surface Pro 11](https://github.com/dwhinham/kernel-surface-pro-11/commit/18192d3093d78b7bf0bf671632ab68346f135d6c)
 
   This patch enables the Surface Aggregator driver, which gets the Flex Keyboard working. It may be possible to remove this patch and add the SAM into the device tree instead.
+
+- [HACK: disable rfkill of ath12k_pci](https://github.com/dwhinham/kernel-surface-pro-11/commit/fcc769be9eaa9823d55e98a28402104621fa6784)
+
+  Without this, Wi-Fi will be hard-blocked by rfkill. It looks like rfkill is supposed to be disabled according to the ath12k feature flags in the [Surface Pro 11's DSDT](https://github.com/aarch64-laptops/build/blob/master/misc/microsoft-surface-pro-11/acpi/dsdt.dsl) (grep it for `f634f534-6147-11ec-90d6-0242ac120003`, the [UUID of the WCN7850](https://github.com/torvalds/linux/blob/851faa888a523f74f9796c2c1cc7b3f7626f0e25/drivers/net/wireless/ath/ath12k/hw.c#L18-L20)). [A patch to read these feature flags via ACPI](https://lore.kernel.org/all/20250113074810.29729-3-quic_lingbok@quicinc.com/) seems to be making its way upstream, however since ACPI isn't being used here we just have to disable rfkill with a hack for now.
 
 ### Device tree
 
