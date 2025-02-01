@@ -4361,6 +4361,13 @@ CONFIG_SURFACE_KBD=m
 # end of Surface System Aggregator Module HID support
 
 CONFIG_SURFACE_HID_CORE=m
+
+#
+# SPI HID support
+#
+CONFIG_SPI_HID=m
+# end of SPI HID support
+
 CONFIG_USB_OHCI_LITTLE_ENDIAN=y
 CONFIG_USB_SUPPORT=y
 CONFIG_USB_COMMON=y
