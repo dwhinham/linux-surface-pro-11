@@ -109,7 +109,6 @@ function arch_setup {
 			grub \
 			iw \
 			iwd \
-			impala \
 			linux-firmware-qcom \
 			sudo \
 			terminus-font
@@ -133,14 +132,12 @@ function arch_setup {
 
 		pacman -Scc --noconfirm
 
-		# Wi-Fi setup
+		# Wi-Fi setup with iwd/ath12k bug workaround: https://bugzilla.kernel.org/show_bug.cgi?id=218733
 		mkdir /etc/iwd
 		cat <<-EOF2 > /etc/iwd/main.conf
 			[General]
 			EnableNetworkConfiguration=true
-
-			# Bug workaround: https://bugzilla.kernel.org/show_bug.cgi?id=218733
-			ControlPortOverNL80211=false	
+			ControlPortOverNL80211=false
 		EOF2
 
 		systemctl enable iwd

@@ -32,7 +32,7 @@ This disk image should be enough to get you to a vanilla Arch Linux ARM prompt. 
 - Username/password: **alarm**/**alarm**
 - Root password: **root**
 - On first boot, run `sudo sp11-grab-fw` and then reboot. This will try to fetch and install proprietary firmware blobs from your Windows partition ([see below](#firmware-blobs)).
-- For Wi-Fi, `iwd`, `iw` and `impala` are installed; `iwd` is enabled by default. Run `impala` to connect to Wi-Fi, or follow the instructions for `iwctl` in the [Arch Linux Wiki](https://wiki.archlinux.org/title/Iwd).
+- For Wi-Fi, `iwd` and `iw` are installed; `iwd` is enabled by default. Run `iwctl` to connect to Wi-Fi; follow the instructions for `iwctl` in the [Arch Linux Wiki](https://wiki.archlinux.org/title/Iwd).
 - Alternatively you can use a USB Ethernet adaptor to get the Surface connected to your network. Plug it in before booting; it should pick up an address via DHCP.
 - `sshd` is running as normal with the generic Arch Linux ARM rootfs.
 
