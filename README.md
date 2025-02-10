@@ -13,7 +13,7 @@ The [kernel tree can be found here](https://github.com/dwhinham/kernel-surface-p
 | Graphics                  |       ✅      | Haven't tested 3D acceleration properly yet, but Hyprland works.                                                                                           |
 | Backlight                 |       ✅      | Can be adjusted via `/sys/class/backlight/dp_aux_backlight/brightness`                                                                                     |
 | USB                       |   Partially  | USB-C ports are working, but Surface Dock connector is presumably not. USB devices must be inserted before boot or they may not be recognized.             |
-| USB-C display output      |       ❓      |                                                                                                                                                            |
+| USB-C display output      |       ❌      |                                                                                                                                                            |
 | Wi-Fi                     |       ✅      | Working with a [kernel hack to disable rfkill](https://github.com/dwhinham/kernel-surface-pro-11/commit/fcc769be9eaa9823d55e98a28402104621fa6784).         |
 | Bluetooth                 |       ✅      | Requires some `udev` rules to set up a valid MAC address, see [Debian wiki](https://wiki.debian.org/InstallingDebianOn/Thinkpad/X13s#Wi-Fi_and_Bluetooth). |
 | Audio                     |       ❌      | Should be similar to Surface Laptop 7.                                                                                                                     |
@@ -29,10 +29,15 @@ A disk image suitable for `dd`'ing to a USB flash drive is [available in the Rel
 
 This disk image should be enough to get you to a vanilla Arch Linux ARM prompt. [Details here](https://archlinuxarm.org/platforms/armv8/generic).
 
-- You'll need a USB Ethernet adaptor to get the Surface connected to your network. Plug it in before booting; it should pick up an address via DHCP.
-- `sshd` is running as normal with the generic Arch Linux ARM rootfs.
 - Username/password: **alarm**/**alarm**
 - Root password: **root**
+- On first boot, run `sudo sp11-grab-fw` and then reboot. This will try to fetch and install proprietary firmware blobs from your Windows partition ([see below](#firmware-blobs)).
+- For Wi-Fi, `iwd`, `iw` and `impala` are installed; `iwd` is enabled by default. Run `impala` to connect to Wi-Fi, or follow the instructions for `iwctl` in the [Arch Linux Wiki](https://wiki.archlinux.org/title/Iwd).
+- Alternatively you can use a USB Ethernet adaptor to get the Surface connected to your network. Plug it in before booting; it should pick up an address via DHCP.
+- `sshd` is running as normal with the generic Arch Linux ARM rootfs.
+
+> [!WARNING]
+> Without installing the firmware, Wi-Fi and many other hardware components will be broken!
 
 ### Installation
 
@@ -70,15 +75,15 @@ The [kernel](https://github.com/dwhinham/kernel-surface-pro-11) is based on [@jh
 
 ### Notable patches
 
-- [drm/msm/dp: raise maximum pixel clock frequency](https://github.com/dwhinham/kernel-surface-pro-11/commit/774c86dbfc2b12281bca6f1d801a47f0c0e59916)
+- [drm/msm/dp: account for widebus and yuv420 during mode validation](https://github.com/dwhinham/kernel-surface-pro-11/commit/81e7630cc416e88f541daba85c402ce2627071cd)
 
-  The EDID of the Surface's OLED panel requests a higher pixel clock than is currently allowed by the DisplayPort driver, so this patch bumps it up a bit[^1].
+  Without this patch, the eDP display panel will fail to probe because the requested pixel clock is too high[^1]. It should be divided by 2 due to the "widebus" feature of the hardware; this patch addresses the problem[^2].
 
 - [drm/msm/dp: work around bogus maximum link rate](https://github.com/dwhinham/kernel-surface-pro-11/commit/7f348af4bf83e913ecac7de209f1fcbbc94cdc3f):
 
   For some reason the DPCD (DisplayPort Configuration Data) contains a zero where a maximum link rate is expected, causing the panel to fail to probe. This patch is an ugly hack which simply hardcodes it to what it should be.
 
-  Some kind of device tree-based override mechanism is probably needed to fix this cleanly, in the same way EDIDs can be overridden[^2].
+  Some kind of device tree-based override mechanism is probably needed to fix this cleanly, in the same way EDIDs can be overridden[^3].
 
 - [arm64: dts: qcom: add support for Surface Pro 11](https://github.com/dwhinham/kernel-surface-pro-11/commit/1e2d777856f63b774dbd0461ba02bceb705a1cf7)
 
@@ -108,25 +113,30 @@ Help is **definitely** needed reviewing and completing this device tree.
 
 Firmware blobs that cannot be distributed here are needed from the stock Windows installation to get certain devices working.
 
-A script [`grab_fw.bat`](grab_fw.bat) is included on the disk image's FAT partition which you can run from Windows. This will collect all the firmware into a `firmware` folder on the root of the flash drive.
+Two scripts are included for firmware extraction:
+
+- [`sp11-grab-fw.sh`](sp11-grab-fw.sh) is installed into `/usr/local/sbin/sp11-grab-fw`. Run `sp11-grab-fw` from Arch Linux, and it will try to mount your Windows partition and automatically copy the firmware files into the right place. **Note that it will disable the aDSP firmware by appending `.disabled` to the destination file name if it detects that you have booted from USB.**
+- [`sp11-grab-fw.bat`](sp11-grab-fw.bat) is included on the disk image's FAT partition which you can run from Windows. This will collect all the firmware into a `firmware` folder on the root of the flash drive.
 From Linux, you can then mount the EFI partition and copy the firmware to your system (e.g. `mount /dev/sda1 /mnt/efi; cp -r /mnt/efi/firmware/* /lib/firmware/`). **However, see the note below about aDSP.**
 
 | **Device** |                                                   **Source (Windows)**                                              |                    **Destination (Linux)**                    |
 |------------|---------------------------------------------------------------------------------------------------------------------|---------------------------------------------------------------|
 | GPU        | `C:\Windows\System32\qcdxkmsuc8380.mbn`                                                                             | `/lib/firmware/qcom/x1e80100/microsoft/qcdxkmsuc8380.mbn`     |
 | Wi-Fi      | `C:\Windows\System32\DriverStore\FileRepository\qcwlanhmt8380.inf_arm64_b6e9acfd0d644720\wlanfw20.mbn`              | `/lib/firmware/ath12k/WCN7850/hw2.0/amss.bin`                 |
-| Wi-Fi      | `C:\Windows\System32\DriverStore\FileRepository\qcwlanhmt8380.inf_arm64_b6e9acfd0d644720\bdwlan_.elf`               | `/lib/firmware/ath12k/WCN7850/hw2.0/board.bin`                |
+| Wi-Fi      | `C:\Windows\System32\DriverStore\FileRepository\qcwlanhmt8380.inf_arm64_b6e9acfd0d644720\bdwlan.elf`                | `/lib/firmware/ath12k/WCN7850/hw2.0/board.bin`                |
 | Wi-Fi      | `C:\Windows\System32\DriverStore\FileRepository\qcwlanhmt8380.inf_arm64_b6e9acfd0d644720\phy_ucode20.elf`           | `/lib/firmware/ath12k/WCN7850/hw2.0/m3.bin`                   |
-| aDSP*       | `C:\Windows\System32\DriverStore\FileRepository\surfacepro_ext_adsp8380.inf_arm64_1067fbcaa7f43f02\adsp_dtbs.elf`  | `/lib/firmware/qcom/x1e80100/microsoft/Denali/adsp_dtb.mbn`   |
-| aDSP*       | `C:\Windows\System32\DriverStore\FileRepository\surfacepro_ext_adsp8380.inf_arm64_1067fbcaa7f43f02\qcadsp8380.mbn` | `/lib/firmware/qcom/x1e80100/microsoft/Denali/qcadsp8380.mbn` |
+| aDSP*      | `C:\Windows\System32\DriverStore\FileRepository\surfacepro_ext_adsp8380.inf_arm64_1067fbcaa7f43f02\adsp_dtbs.elf`   | `/lib/firmware/qcom/x1e80100/microsoft/Denali/adsp_dtb.mbn`   |
+| aDSP       | `C:\Windows\System32\DriverStore\FileRepository\surfacepro_ext_adsp8380.inf_arm64_1067fbcaa7f43f02\qcadsp8380.mbn`  | `/lib/firmware/qcom/x1e80100/microsoft/Denali/qcadsp8380.mbn` |
 | cDSP       | `C:\Windows\System32\DriverStore\FileRepository\qcsubsys_ext_cdsp8380.inf_arm64_9ed31fd1359980a9\cdsp_dtbs.elf`     | `/lib/firmware/qcom/x1e80100/microsoft/Denali/cdsp_dtb.mbn`   |
 | cDSP       | `C:\Windows\System32\DriverStore\FileRepository\qcsubsys_ext_cdsp8380.inf_arm64_9ed31fd1359980a9\qccdsp8380.mbn`    | `/lib/firmware/qcom/x1e80100/microsoft/Denali/qccdsp8380.mbn` |
 
-* **Note**: Having the aDSP firmware installed seems to cause USB disconnect/boot failure late on in boot, so I wouldn't use it until this has been debugged.
+> [!WARNING]
+> Having the aDSP firmware installed seems to cause USB disconnect/boot failure late on in boot, so it should not be used when booting from USB.
 
 ### Thanks
 
 Many thanks to those who helped with my questions on `#aarch64-laptops`!
 
 [^1]: https://oftc.irclog.whitequark.org/aarch64-laptops/2025-01-21#1737473409-1737472297;
-[^2]: https://oftc.irclog.whitequark.org/aarch64-laptops/2025-01-21#1737478369-1737481210;
+[^2]: https://patchwork.kernel.org/project/linux-arm-msm/patch/20250206-dp-widebus-fix-v2-1-cb89a0313286@quicinc.com/
+[^3]: https://oftc.irclog.whitequark.org/aarch64-laptops/2025-01-21#1737478369-1737481210;
