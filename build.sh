@@ -22,20 +22,19 @@ function check_arch {
 }
 
 function check_tools {
-	if ! command -v bsdtar >/dev/null 2>&1; then
-		echo bsdtar not found - please install it!
-		exit 1
-	fi
+	local tools=(
+		bsdtar
+		mkfs.fat
+		partprobe
+		sfdisk
+	)
 
-	if ! command -v sfdisk >/dev/null 2>&1; then
-		echo sfdisk not found - please install it!
-		exit 1
-	fi
-
-	if ! command -v mkfs.fat >/dev/null 2>&1; then
-		echo mkfs.fat not found - please install dosfstools!
-		exit 1
-	fi
+	for tool in ${tools[@]}; do
+		if ! command -v $tool >/dev/null 2>&1; then
+			echo $tool not found - please install it!
+			exit 1
+		fi
+	done
 }
 
 function create_dirs {
@@ -63,7 +62,7 @@ function attach_and_mount {
 	loopdev=`losetup --partscan --find --show build/$DISK_IMAGE_NAME`
 	echo Disk image attached at $loopdev
 
-	sleep 1
+	partprobe $loopdev
 
 	mkfs.fat -F32 ${loopdev}p1 -n ARCH
 	mkfs.ext4 ${loopdev}p2
@@ -72,8 +71,7 @@ function attach_and_mount {
 }
 
 function unmount_and_detach {
-	umount --recursive build/root
-	losetup -d $loopdev
+	umount --recursive --detach-loop build/root
 	echo Disk image at $loopdev detached
 }
 
@@ -82,18 +80,22 @@ function arch_setup {
 
 	mount -t proc /proc build/root/proc/
 	mount -t sysfs /sys build/root/sys/
-	mount -o bind /dev build/root/dev/
+	mount --bind /dev build/root/dev/
+	mount --bind /dev/pts build/root/dev/pts/
 	mkdir -p build/root/mnt/efi
 	mount ${loopdev}p1 build/root/mnt/efi
 
-	cp grab_fw.bat build/root/mnt/efi/
+	cp sp11-grab-fw.bat build/root/mnt/efi/
 
-	# Copy kernel, modules, and dtbs
+	# Copy kernel, modules, dtbs and firmware copy script
 	cp -r build/boot/* build/root/boot/
 	cp -r build/modules/lib/modules/* build/root/lib/modules/
+	cp sp11-grab-fw.sh build/root/usr/local/sbin/sp11-grab-fw
 
 	# Chroot into Arch Linux and install some useful tools
 	chroot build/root /bin/bash <<-'EOF'
+		set -e
+
 		mv /etc/resolv.conf{,.bak}
 		echo "nameserver 1.1.1.1" > /etc/resolv.conf
 
@@ -102,11 +104,44 @@ function arch_setup {
 		pacman -D --asexplicit linux-firmware mkinitcpio
 		pacman -Rcnus --noconfirm linux-aarch64
 		pacman -Syu --noconfirm \
-			linux-firmware-qcom \
+			base-devel \
+			git \
 			grub \
+			iw \
+			iwd \
+			impala \
+			linux-firmware-qcom \
+			sudo \
 			terminus-font
 
+		# Give wheel users (i.e. alarm) no-password sudo access otherwise makepkg won't work
+		sed -i 's/^#\s*%wheel\s*ALL=(ALL:ALL)\s*NOPASSWD: ALL/%wheel ALL=(ALL:ALL) NOPASSWD: ALL/' /etc/sudoers
+
+		# Install dislocker from AUR (used for extracting firmware)
+		su alarm
+			tmp=$(mktemp -d)
+			git clone https://aur.archlinux.org/dislocker.git "$tmp/dislocker"
+			pushd "$tmp/dislocker"
+
+			# Add missing aarch64 architecture
+			sed -i "s/arch=(/arch=('aarch64' /" PKGBUILD
+			
+			makepkg -si --noconfirm
+			popd
+			rm -rf "$tmp"
+		exit
+
 		pacman -Scc --noconfirm
+
+		# Wi-Fi setup
+		mkdir /etc/iwd
+		cat <<-EOF2 > /etc/iwd/main.conf
+			[General]
+			EnableNetworkConfiguration=true
+
+			# Bug workaround: https://bugzilla.kernel.org/show_bug.cgi?id=218733
+			ControlPortOverNL80211=false	
+		EOF2
 
 		echo FONT=ter-132n >> /etc/vconsole.conf
 
@@ -120,6 +155,7 @@ function arch_setup {
 		grub-mkconfig > /boot/grub/grub.cfg
 		sed -i '/initrd[[:space:]]*\/boot\/.*\.img/a \	devicetree /boot/dtbs/'$kversion'/qcom/x1e80100-microsoft-denali.dtb' /boot/grub/grub.cfg
 
+		# This process will prevent unmounting after exiting the chroot if it's left dangling
 		killall -wv gpg-agent
 	EOF
 }
