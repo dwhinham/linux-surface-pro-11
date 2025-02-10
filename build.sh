@@ -143,6 +143,8 @@ function arch_setup {
 			ControlPortOverNL80211=false	
 		EOF2
 
+		systemctl enable iwd
+
 		echo FONT=ter-132n >> /etc/vconsole.conf
 
 		sed -i 's/^MODULES=().*$/MODULES=(tcsrcc-x1e80100 phy-qcom-qmp-pcie phy-qcom-qmp-usb phy-qcom-qmp-usbc phy-qcom-eusb2-repeater phy-qcom-snps-eusb2 phy-qcom-qmp-combo surface-hid surface-aggregator surface-aggregator-registry surface-aggregator-hub)/' /etc/mkinitcpio.conf
