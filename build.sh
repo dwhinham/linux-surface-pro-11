@@ -119,7 +119,7 @@ function arch_setup {
 		# Install dislocker from AUR (used for extracting firmware)
 		su alarm
 			tmp=$(mktemp -d)
-			git clone https://aur.archlinux.org/dislocker.git "$tmp/dislocker"
+			git clone https://aur.archlinux.org/dislocker-git.git "$tmp/dislocker"
 			pushd "$tmp/dislocker"
 
 			# Add missing aarch64 architecture
