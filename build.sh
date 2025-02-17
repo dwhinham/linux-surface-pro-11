@@ -41,6 +41,24 @@ function create_dirs {
 	mkdir -p build/root
 }
 
+
+function build_kernel {
+	if [ ! -f build/boot/vmlinuz* ]; then
+		git clone https://github.com/dwhinham/kernel-surface-pro-11 build/linux-sp11 --single-branch --branch wip/x1e80100-6.13-sp11 --depth 1
+
+		cp kernel_config build/linux-sp11/.config
+
+		mkdir -p build/boot build/modules
+		export INSTALL_PATH=../boot
+		export INSTALL_MOD_PATH=../modules
+
+		make -C build/linux-sp11 -j12
+		make -C build/linux-sp11 modules_install
+		make -C build/linux-sp11 dtbs_install
+		make -C build/linux-sp11 install
+	fi
+}
+
 function get_rootfs {
 	if [ ! -f build/rootfs.tar.gz ]; then
 		curl -fLo build/rootfs.tar.gz "$ROOTFS_URL" 2>&1
@@ -68,11 +86,6 @@ function attach_and_mount {
 	mkfs.ext4 ${loopdev}p2
 
 	mount ${loopdev}p2 build/root
-}
-
-function unmount_and_detach {
-	umount --recursive --detach-loop build/root
-	echo Disk image at $loopdev detached
 }
 
 function arch_setup {
@@ -159,21 +172,9 @@ function arch_setup {
 	EOF
 }
 
-function build_kernel {
-	if [ ! -f build/boot/vmlinuz* ]; then
-		git clone https://github.com/dwhinham/kernel-surface-pro-11 build/linux-sp11 --single-branch --branch wip/x1e80100-6.13-sp11 --depth 1
-
-		cp kernel_config build/linux-sp11/.config
-
-		mkdir -p build/boot build/modules
-		export INSTALL_PATH=../boot
-		export INSTALL_MOD_PATH=../modules
-
-		make -C build/linux-sp11 -j12
-		make -C build/linux-sp11 modules_install
-		make -C build/linux-sp11 dtbs_install
-		make -C build/linux-sp11 install
-	fi
+function unmount_and_detach {
+	umount --recursive --detach-loop build/root
+	echo Disk image at $loopdev detached
 }
 
 check_root
