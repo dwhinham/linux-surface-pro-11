@@ -2,9 +2,9 @@ name: CI
 
 on:
   push:
-    branches: [ "main" ]
+    branches: ["main"]
   pull_request:
-    branches: [ "main" ]
+    branches: ["main"]
 
   workflow_dispatch:
 
@@ -28,3 +28,15 @@ jobs:
         with:
           name: arch-linux-arm-sp11.img
           path: build/arch-linux-arm-sp11.img
+
+      - name: Upload kernel
+        uses: actions/upload-artifact@v4
+        with:
+          name: kernel
+          path: build/boot
+
+      - name: Upload modules
+        uses: actions/upload-artifact@v4
+        with:
+          name: modules
+          path: build/modules/lib/modules
