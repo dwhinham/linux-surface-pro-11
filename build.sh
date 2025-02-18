@@ -163,7 +163,9 @@ function build_kernel {
 	if [ ! -f build/boot/vmlinuz* ]; then
 		git clone https://github.com/dwhinham/kernel-surface-pro-11 build/linux-sp11 --single-branch --branch wip/x1e80100-6.13-sp11 --depth 1
 
-		cp kernel_config build/linux-sp11/.config
+		make -C build/linux-sp11 johan_defconfig
+		./build/linux-sp11/scripts/kconfig/merge_config.sh -O build/linux-sp11 -m build/linux-sp11/.config kernel_config_fragment
+		make -C build/linux-sp11 olddefconfig
 
 		mkdir -p build/boot build/modules
 		export INSTALL_PATH=../boot
@@ -172,7 +174,7 @@ function build_kernel {
 		make -C build/linux-sp11 -j12
 		make -C build/linux-sp11 modules_install
 		make -C build/linux-sp11 dtbs_install
-		make -C build/linux-sp11 install
+		make -C build/linux-sp11 zinstall
 	fi
 }
 
