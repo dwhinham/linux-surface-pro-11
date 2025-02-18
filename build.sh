@@ -110,10 +110,12 @@ function arch_setup {
 		pacman -Rcnus --noconfirm linux-aarch64
 		pacman -Syu --noconfirm \
 			base-devel \
+			cabextract \
 			git \
 			grub \
 			iw \
 			iwd \
+			jq \
 			linux-firmware-qcom \
 			python \
 			sudo \
