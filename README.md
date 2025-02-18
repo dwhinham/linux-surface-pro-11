@@ -31,13 +31,13 @@ This disk image should be enough to get you to a vanilla Arch Linux ARM prompt. 
 
 - Username/password: **alarm**/**alarm**
 - Root password: **root**
-- On first boot, run `sudo sp11-grab-fw` and then reboot. This will try to fetch and install proprietary firmware blobs from your Windows partition ([see below](#firmware-blobs)).
 - For Wi-Fi, `iwd` and `iw` are installed; `iwd` is enabled by default. Run `iwctl` to connect to Wi-Fi; follow the instructions for `iwctl` in the [Arch Linux Wiki](https://wiki.archlinux.org/title/Iwd).
-- Alternatively you can use a USB Ethernet adaptor to get the Surface connected to your network. Plug it in before booting; it should pick up an address via DHCP.
+- Alternatively you can use a USB Ethernet adaptor to get the Surface connected to your network. Plug it in before booting; it should pick up an address via DHCP. 
+- After connecting to the Internet, run `sudo sp11-grab-fw` and then reboot. This will try to fetch and install proprietary firmware blobs from the [WOA-Project QRD repository](WOA-Project/Qualcomm-Reference-Driver) ([see below](#firmware-blobs)).
 - `sshd` is running as normal with the generic Arch Linux ARM rootfs.
 
 > [!WARNING]
-> Without installing the firmware, Wi-Fi and many other hardware components will be broken!
+> Without installing the firmware, many hardware components will be broken!
 
 ### Installation
 
@@ -115,16 +115,13 @@ Firmware blobs that cannot be distributed here are needed from the stock Windows
 
 Two scripts are included for firmware extraction:
 
-- [`sp11-grab-fw.sh`](sp11-grab-fw.sh) is installed into `/usr/local/sbin/sp11-grab-fw`. Run `sp11-grab-fw` from Arch Linux, and it will try to mount your Windows partition and automatically copy the firmware files into the right place. **Note that it will disable the aDSP firmware by appending `.disabled` to the destination file name if it detects that you have booted from USB.**
+- [`sp11-grab-fw.sh`](sp11-grab-fw.sh) is installed into `/usr/local/sbin/sp11-grab-fw`. Run `sp11-grab-fw` from Arch Linux, and it will try download firmware from GitHub. Alternatively, pass the `--win` option to mount your Windows partition and automatically copy the firmware files into the right place. **Note that it will disable the aDSP firmware by appending `.disabled` to the destination file name if it detects that you have booted from USB.**
 - [`sp11-grab-fw.bat`](sp11-grab-fw.bat) is included on the disk image's FAT partition which you can run from Windows. This will collect all the firmware into a `firmware` folder on the root of the flash drive.
 From Linux, you can then mount the EFI partition and copy the firmware to your system (e.g. `mount /dev/sda1 /mnt/efi; cp -r /mnt/efi/firmware/* /lib/firmware/`). **However, see the note below about aDSP.**
 
 | **Device** |                                                   **Source (Windows)**                                              |                    **Destination (Linux)**                    |
 |------------|---------------------------------------------------------------------------------------------------------------------|---------------------------------------------------------------|
 | GPU        | `C:\Windows\System32\qcdxkmsuc8380.mbn`                                                                             | `/lib/firmware/qcom/x1e80100/microsoft/qcdxkmsuc8380.mbn`     |
-| Wi-Fi      | `C:\Windows\System32\DriverStore\FileRepository\qcwlanhmt8380.inf_arm64_b6e9acfd0d644720\wlanfw20.mbn`              | `/lib/firmware/ath12k/WCN7850/hw2.0/amss.bin`                 |
-| Wi-Fi      | `C:\Windows\System32\DriverStore\FileRepository\qcwlanhmt8380.inf_arm64_b6e9acfd0d644720\bdwlan.elf`                | `/lib/firmware/ath12k/WCN7850/hw2.0/board.bin`                |
-| Wi-Fi      | `C:\Windows\System32\DriverStore\FileRepository\qcwlanhmt8380.inf_arm64_b6e9acfd0d644720\phy_ucode20.elf`           | `/lib/firmware/ath12k/WCN7850/hw2.0/m3.bin`                   |
 | aDSP*      | `C:\Windows\System32\DriverStore\FileRepository\surfacepro_ext_adsp8380.inf_arm64_1067fbcaa7f43f02\adsp_dtbs.elf`   | `/lib/firmware/qcom/x1e80100/microsoft/Denali/adsp_dtb.mbn`   |
 | aDSP       | `C:\Windows\System32\DriverStore\FileRepository\surfacepro_ext_adsp8380.inf_arm64_1067fbcaa7f43f02\qcadsp8380.mbn`  | `/lib/firmware/qcom/x1e80100/microsoft/Denali/qcadsp8380.mbn` |
 | cDSP       | `C:\Windows\System32\DriverStore\FileRepository\qcsubsys_ext_cdsp8380.inf_arm64_9ed31fd1359980a9\cdsp_dtbs.elf`     | `/lib/firmware/qcom/x1e80100/microsoft/Denali/cdsp_dtb.mbn`   |
