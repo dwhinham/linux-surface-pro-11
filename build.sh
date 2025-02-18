@@ -6,6 +6,9 @@ ROOTFS_URL=http://os.archlinuxarm.org/os/ArchLinuxARM-aarch64-latest.tar.gz
 DISK_IMAGE_NAME=arch-linux-arm-sp11.img
 DISK_IMAGE_SIZE_MB=4096
 
+KERNEL_GIT_REPO=https://github.com/dwhinham/kernel-surface-pro-11
+KERNEL_GIT_BRANCH=wip/x1e80100-6.14-rc3-sp11
+
 function check_root {
 	if [ "$EUID" -ne 0 ]; then
 		echo "This script must be run as root."
@@ -176,7 +179,7 @@ function arch_setup {
 
 function build_kernel {
 	if [ ! -f build/boot/vmlinuz* ]; then
-		git clone https://github.com/dwhinham/kernel-surface-pro-11 build/linux-sp11 --single-branch --branch wip/x1e80100-6.13-sp11 --depth 1
+		git clone $KERNEL_GIT_REPO build/linux-sp11 --single-branch --branch $KERNEL_GIT_BRANCH --depth 1
 
 		make -C build/linux-sp11 johan_defconfig
 		./build/linux-sp11/scripts/kconfig/merge_config.sh -O build/linux-sp11 -m build/linux-sp11/.config kernel_config_fragment
