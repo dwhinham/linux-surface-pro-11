@@ -27,6 +27,7 @@ function check_arch {
 function check_tools {
 	local tools=(
 		bsdtar
+		curl
 		mkfs.fat
 		partprobe
 		sfdisk
@@ -183,8 +184,14 @@ function build_kernel {
 	if [ ! -f build/boot/vmlinuz* ]; then
 		git clone $KERNEL_GIT_REPO build/linux-sp11 --single-branch --branch $KERNEL_GIT_BRANCH --depth 1
 
-		make -C build/linux-sp11 johan_defconfig
-		./build/linux-sp11/scripts/kconfig/merge_config.sh -O build/linux-sp11 -m build/linux-sp11/.config kernel_config_fragment
+		# Download base kernel config for Arch Linux ARM
+		curl -Lo alarm_base_config "https://raw.githubusercontent.com/archlinuxarm/PKGBUILDs/54d7921c1be7c42a7c2ccd956bfef842be676eac/core/linux-aarch64-rc/config"
+
+		./build/linux-sp11/scripts/kconfig/merge_config.sh -O build/linux-sp11 -m \
+				alarm_base_config \
+				build/linux-sp11/arch/arm64/configs/johan_defconfig \
+				kernel_config_fragment
+
 		make -C build/linux-sp11 olddefconfig
 
 		mkdir -p build/boot build/modules
