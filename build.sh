@@ -7,7 +7,9 @@ DISK_IMAGE_NAME=arch-linux-arm-sp11.img
 DISK_IMAGE_SIZE_MB=4096
 
 KERNEL_GIT_REPO=https://github.com/dwhinham/kernel-surface-pro-11
-KERNEL_GIT_BRANCH=wip/x1e80100-6.14-rc3-sp11
+KERNEL_GIT_BRANCH=wip/x1e80100-6.14-rc4-sp11
+
+KERNEL_BASE_CONFIG_URL=https://raw.githubusercontent.com/archlinuxarm/PKGBUILDs/master/core/linux-aarch64-rc/config
 
 function check_root {
 	if [ "$EUID" -ne 0 ]; then
@@ -185,10 +187,10 @@ function build_kernel {
 		git clone $KERNEL_GIT_REPO build/linux-sp11 --single-branch --branch $KERNEL_GIT_BRANCH --depth 1
 
 		# Download base kernel config for Arch Linux ARM
-		curl -Lo alarm_base_config "https://raw.githubusercontent.com/archlinuxarm/PKGBUILDs/54d7921c1be7c42a7c2ccd956bfef842be676eac/core/linux-aarch64-rc/config"
+		curl -Lo build/alarm_base_config $KERNEL_BASE_CONFIG_URL
 
 		./build/linux-sp11/scripts/kconfig/merge_config.sh -O build/linux-sp11 -m \
-				alarm_base_config \
+				build/alarm_base_config \
 				build/linux-sp11/arch/arm64/configs/johan_defconfig \
 				kernel_config_fragment
 
