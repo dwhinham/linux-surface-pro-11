@@ -1,0 +1,10 @@
+[Trigger]
+Operation = Install
+Operation = Upgrade
+Type = Package
+Target = grub
+
+[Action]
+Description = Applying GRUB patch for Surface Pro 11...
+When = PostTransaction
+Exec = /etc/pacman.d/hooks/apply_grub_patch.sh

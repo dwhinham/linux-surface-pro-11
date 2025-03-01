@@ -98,6 +98,9 @@ function arch_setup {
 	cp -r build/modules/lib/modules/* build/root/lib/modules/
 	cp sp11-grab-fw.sh build/root/usr/local/sbin/sp11-grab-fw
 
+	# Install a pacman hook to patch GRUB script and insert SP11 dtb
+	cp -r hooks build/root/etc/pacman.d/
+
 	# Chroot into Arch Linux and install some useful tools
 	chroot build/root /bin/bash <<-'EOF'
 		set -e
@@ -175,7 +178,6 @@ function arch_setup {
 		mkinitcpio -k $kversion -g /boot/initramfs-$kversion.img -v
 		grub-install --target=arm64-efi --efi-directory=/mnt/efi --removable
 		grub-mkconfig > /boot/grub/grub.cfg
-		sed -i '/initrd[[:space:]]*\/boot\/.*\.img/a \	devicetree /boot/dtbs/'$kversion'/qcom/x1e80100-microsoft-denali.dtb' /boot/grub/grub.cfg
 
 		# This process will prevent unmounting after exiting the chroot if it's left dangling
 		killall -wv gpg-agent
