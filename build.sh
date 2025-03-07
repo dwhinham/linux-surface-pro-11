@@ -7,7 +7,7 @@ DISK_IMAGE_NAME=arch-linux-arm-sp11.img
 DISK_IMAGE_SIZE_MB=4096
 
 KERNEL_GIT_REPO=https://github.com/dwhinham/kernel-surface-pro-11
-KERNEL_GIT_BRANCH=wip/x1e80100-6.14-rc4-sp11
+KERNEL_GIT_BRANCH=wip/x1e80100-6.14-rc5-sp11
 
 KERNEL_BASE_CONFIG_URL=https://raw.githubusercontent.com/archlinuxarm/PKGBUILDs/master/core/linux-aarch64-rc/config
 
