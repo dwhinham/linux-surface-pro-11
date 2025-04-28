@@ -12,7 +12,7 @@ The [kernel tree can be found here](https://github.com/dwhinham/kernel-surface-p
 | NVMe                      |       ✅      |                                                                                                                                                            |
 | Graphics                  |       ✅      | Haven't tested 3D acceleration properly yet, but Hyprland works.                                                                                           |
 | Backlight                 |       ✅      | Can be adjusted via `/sys/class/backlight/dp_aux_backlight/brightness`                                                                                     |
-| USB                       |   Partially  | USB-C ports are working, but Surface Dock connector is presumably not. USB devices must be inserted before boot or they may not be recognized.             |
+| USB                       |   Partially  | USB-C ports are working, but Surface Dock connector is presumably not.                                                                                      |
 | USB-C display output      |       ❌      |                                                                                                                                                            |
 | Wi-Fi                     |       ✅      | Working with a [kernel hack to disable rfkill](https://github.com/dwhinham/kernel-surface-pro-11/commit/fcc769be9eaa9823d55e98a28402104621fa6784).         |
 | Bluetooth                 |       ✅      | Requires some `udev` rules to set up a valid MAC address, see [Debian wiki](https://wiki.debian.org/InstallingDebianOn/Thinkpad/X13s#Wi-Fi_and_Bluetooth). |
@@ -67,7 +67,7 @@ The script performs the following:
 - Edits `/etc/mkinitcpio.conf` so that the initramfs contains essential kernel modules for booting (enough to get us USB and the Surface keyboard for debugging).
 - Edits `/etc/default/grub` to include some essential kernel command line arguments.
 - Creates the initramfs, installs GRUB into `/mnt/efi` and generates the GRUB config.
-- Patches the GRUB config to add a `devicetree` line that loads our Surface Pro 11 device tree.
+- Patches the GRUB config scripts so that they add a `devicetree` line that loads our Surface Pro 11 device tree.
 
 ## Kernel
 
@@ -75,15 +75,11 @@ The [kernel](https://github.com/dwhinham/kernel-surface-pro-11) is based on [@jh
 
 ### Notable patches
 
-- [drm/msm/dp: account for widebus and yuv420 during mode validation](https://github.com/dwhinham/kernel-surface-pro-11/commit/81e7630cc416e88f541daba85c402ce2627071cd)
-
-  Without this patch, the eDP display panel will fail to probe because the requested pixel clock is too high[^1]. It should be divided by 2 due to the "widebus" feature of the hardware; this patch addresses the problem[^2].
-
 - [drm/msm/dp: work around bogus maximum link rate](https://github.com/dwhinham/kernel-surface-pro-11/commit/7f348af4bf83e913ecac7de209f1fcbbc94cdc3f):
 
   For some reason the DPCD (DisplayPort Configuration Data) contains a zero where a maximum link rate is expected, causing the panel to fail to probe. This patch is an ugly hack which simply hardcodes it to what it should be.
 
-  Some kind of device tree-based override mechanism is probably needed to fix this cleanly, in the same way EDIDs can be overridden[^3].
+  Some kind of device tree-based override mechanism is probably needed to fix this cleanly, in the same way EDIDs can be overridden[^1].
 
 - [arm64: dts: qcom: add support for Surface Pro 11](https://github.com/dwhinham/kernel-surface-pro-11/commit/1e2d777856f63b774dbd0461ba02bceb705a1cf7)
 
@@ -134,6 +130,4 @@ From Linux, you can then mount the EFI partition and copy the firmware to your s
 
 Many thanks to those who helped with my questions on `#aarch64-laptops`!
 
-[^1]: https://oftc.irclog.whitequark.org/aarch64-laptops/2025-01-21#1737473409-1737472297;
-[^2]: https://patchwork.kernel.org/project/linux-arm-msm/patch/20250206-dp-widebus-fix-v2-1-cb89a0313286@quicinc.com/
-[^3]: https://oftc.irclog.whitequark.org/aarch64-laptops/2025-01-21#1737478369-1737481210;
+[^1]: https://oftc.irclog.whitequark.org/aarch64-laptops/2025-01-21#1737478369-1737481210;
