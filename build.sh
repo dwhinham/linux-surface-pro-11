@@ -4,7 +4,7 @@ set -e
 
 ROOTFS_URL=http://os.archlinuxarm.org/os/ArchLinuxARM-aarch64-latest.tar.gz
 DISK_IMAGE_NAME=arch-linux-arm-sp11.img
-DISK_IMAGE_SIZE_MB=4096
+DISK_IMAGE_SIZE_MB=6144
 
 KERNEL_GIT_REPO=https://github.com/dwhinham/kernel-surface-pro-11
 KERNEL_GIT_BRANCH=wip/x1e80100-6.15-rc3-sp11
