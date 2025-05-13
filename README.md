@@ -13,7 +13,7 @@ The [kernel tree can be found here](https://github.com/dwhinham/kernel-surface-p
 | Graphics                  |       ✅      | Haven't tested 3D acceleration properly yet, but Hyprland works.                                                                                           |
 | Backlight                 |       ✅      | Can be adjusted via `/sys/class/backlight/dp_aux_backlight/brightness`                                                                                     |
 | USB                       |   Partially  | USB-C ports are working, but Surface Dock connector is presumably not.                                                                                      |
-| USB-C display output      |       ❌      |                                                                                                                                                            |
+| USB-C display output      |       ✅      | Working as of 6.15-rc6.                                                                                                                                    |
 | Wi-Fi                     |       ✅      | Working with a [kernel hack to disable rfkill](https://github.com/dwhinham/kernel-surface-pro-11/commit/fcc769be9eaa9823d55e98a28402104621fa6784).         |
 | Bluetooth                 |       ✅      | Requires some `udev` rules to set up a valid MAC address, see [Debian wiki](https://wiki.debian.org/InstallingDebianOn/Thinkpad/X13s#Wi-Fi_and_Bluetooth). |
 | Audio                     |       ❌      | Should be similar to Surface Laptop 7.                                                                                                                     |
@@ -33,7 +33,7 @@ This disk image should be enough to get you to a vanilla Arch Linux ARM prompt. 
 - Root password: **root**
 - For Wi-Fi, `iwd` and `iw` are installed; `iwd` is enabled by default. Run `iwctl` to connect to Wi-Fi; follow the instructions for `iwctl` in the [Arch Linux Wiki](https://wiki.archlinux.org/title/Iwd).
 - Alternatively you can use a USB Ethernet adaptor to get the Surface connected to your network. Plug it in before booting; it should pick up an address via DHCP. 
-- After connecting to the Internet, run `sudo sp11-grab-fw` and then reboot. This will try to fetch and install proprietary firmware blobs from the [WOA-Project QRD repository](WOA-Project/Qualcomm-Reference-Driver) ([see below](#firmware-blobs)).
+- After connecting to the Internet, run `sudo sp11-grab-fw` and then reboot. This will try to fetch and install proprietary firmware blobs from the [WOA-Project QRD repository](https://github.com/WOA-Project/Qualcomm-Reference-Drivers) ([see below](#firmware-blobs)).
 - `sshd` is running as normal with the generic Arch Linux ARM rootfs.
 
 > [!WARNING]
@@ -75,31 +75,31 @@ The [kernel](https://github.com/dwhinham/kernel-surface-pro-11) is based on [@jh
 
 ### Notable patches
 
-- [drm/msm/dp: work around bogus maximum link rate](https://github.com/dwhinham/kernel-surface-pro-11/commit/7f348af4bf83e913ecac7de209f1fcbbc94cdc3f):
+- [drm/msm/dp: work around bogus maximum link rate](https://github.com/dwhinham/kernel-surface-pro-11/commit/f7b7cdf4452ff92d1f3fb407e3f00b2e35b8001b):
 
   For some reason the DPCD (DisplayPort Configuration Data) contains a zero where a maximum link rate is expected, causing the panel to fail to probe. This patch is an ugly hack which simply hardcodes it to what it should be.
 
   Some kind of device tree-based override mechanism is probably needed to fix this cleanly, in the same way EDIDs can be overridden[^1].
 
-- [arm64: dts: qcom: add support for Surface Pro 11](https://github.com/dwhinham/kernel-surface-pro-11/commit/1e2d777856f63b774dbd0461ba02bceb705a1cf7)
+- [arm64: dts: qcom: add support for Surface Pro 11](https://github.com/dwhinham/kernel-surface-pro-11/commit/525e08bb6ae3e05d6823979e90eb64c501f16851)
 
   This patch introduces a device tree for the Surface Pro 11. It's nowhere near complete, but it's enough to get started.
 
-- [firmware: qcom: scm: allow QSEECOM on Surface Pro 11](https://github.com/dwhinham/kernel-surface-pro-11/commit/01dd77a4e2e74f16a1e77ef5ec5ecccfa69caafc)
+- [firmware: qcom: scm: allow QSEECOM on Surface Pro 11](https://github.com/dwhinham/kernel-surface-pro-11/commit/ceda90eb7dcc3c64e845d023ce0a74bc3719ce6e)
 
   Minor patch to whitelist the Surface Pro 11 and enable access to EFI variables through the QSEECOM driver (useful for setting up bootloaders etc).
 
-- [platform/surface: aggregator_registry: Add Surface Pro 11](https://github.com/dwhinham/kernel-surface-pro-11/commit/18192d3093d78b7bf0bf671632ab68346f135d6c)
+- [platform/surface: aggregator_registry: Add Surface Pro 11](https://github.com/dwhinham/kernel-surface-pro-11/commit/9e250e3f9e188e8d72908d2a45e91f6e451863bd)
 
   This patch enables the Surface Aggregator driver, which gets the Flex Keyboard working. It may be possible to remove this patch and add the SAM into the device tree instead.
 
-- [HACK: disable rfkill of ath12k_pci](https://github.com/dwhinham/kernel-surface-pro-11/commit/fcc769be9eaa9823d55e98a28402104621fa6784)
+- [wifi: ath12k: Add support for disabling rfkill via devicetree](https://github.com/dwhinham/kernel-surface-pro-11/commit/8d317aba05dbd1547383fedeeb3477d0ca546891) and [arm64: dts: qcom: x1e80100-denali: Disable rfkill for wifi0](https://github.com/dwhinham/kernel-surface-pro-11/commit/ee6b71fe054a448b70a73da01081a9306ebe0878)
 
-  Without this, Wi-Fi will be hard-blocked by rfkill. It looks like rfkill is supposed to be disabled according to the ath12k feature flags in the [Surface Pro 11's DSDT](https://github.com/aarch64-laptops/build/blob/master/misc/microsoft-surface-pro-11/acpi/dsdt.dsl) (grep it for `f634f534-6147-11ec-90d6-0242ac120003`, the [UUID of the WCN7850](https://github.com/torvalds/linux/blob/851faa888a523f74f9796c2c1cc7b3f7626f0e25/drivers/net/wireless/ath/ath12k/hw.c#L18-L20)). [A patch to read these feature flags via ACPI](https://lore.kernel.org/all/20250113074810.29729-3-quic_lingbok@quicinc.com/) seems to be making its way upstream, however since ACPI isn't being used here we just have to disable rfkill with a hack for now.
+  Without this, Wi-Fi will be hard-blocked by rfkill. It looks like rfkill is supposed to be disabled according to the ath12k feature flags in the [Surface Pro 11's DSDT](https://github.com/aarch64-laptops/build/blob/master/misc/microsoft-surface-pro-11/acpi/dsdt.dsl) (grep it for `f634f534-6147-11ec-90d6-0242ac120003`, the [UUID of the WCN7850](https://github.com/torvalds/linux/blob/851faa888a523f74f9796c2c1cc7b3f7626f0e25/drivers/net/wireless/ath/ath12k/hw.c#L18-L20)). [A patch to read these feature flags via ACPI](https://lore.kernel.org/all/20250113074810.29729-3-quic_lingbok@quicinc.com/) seems to be making its way upstream, however since ACPI isn't being used here we add a device tree flag that lets us disable it.
 
 ### Device tree
 
-The [device tree](https://github.com/dwhinham/kernel-surface-pro-11/blob/wip/x1e80100-6.13-sp11/arch/arm64/boot/dts/qcom/x1e80100-microsoft-denali.dts) is mostly based on the [Surface Laptop 7](https://github.com/torvalds/linux/blob/master/arch/arm64/boot/dts/qcom/x1e80100-microsoft-romulus.dtsi) and [Qualcomm CRD](https://github.com/torvalds/linux/blob/master/arch/arm64/boot/dts/qcom/x1e80100-crd.dts) device trees as they share many similarities.
+The [device tree](https://github.com/dwhinham/kernel-surface-pro-11/blob/wip/x1e80100-6.15-rc6-sp11/arch/arm64/boot/dts/qcom/x1e80100-microsoft-denali.dts) is mostly based on the [Surface Laptop 7](https://github.com/torvalds/linux/blob/master/arch/arm64/boot/dts/qcom/x1e80100-microsoft-romulus.dtsi) and [Qualcomm CRD](https://github.com/torvalds/linux/blob/master/arch/arm64/boot/dts/qcom/x1e80100-crd.dts) device trees as they share many similarities.
 
 The values for the regulators in the `apps_rsc` section were found by scraping the [DSDT dump](https://github.com/aarch64-laptops/build/blob/master/misc/microsoft-surface-pro-11/acpi/dsdt.dsl) and looking for the sections that contain `PMICVREGVOTE`.
 
