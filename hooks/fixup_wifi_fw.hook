@@ -1,0 +1,10 @@
+[Trigger]
+Operation = Install
+Operation = Upgrade
+Type = Package
+Target = linux-firmware
+
+[Action]
+Description = Extracting board.bin for Surface Pro 11 Wi-Fi...
+When = PostTransaction
+Exec = /etc/pacman.d/hooks/fixup_wifi_fw.sh

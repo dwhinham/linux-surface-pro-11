@@ -98,14 +98,12 @@ function arch_setup {
 	cp -r build/modules/lib/modules/* build/root/lib/modules/
 	cp sp11-grab-fw.sh build/root/usr/local/sbin/sp11-grab-fw
 
-	# Install a pacman hook to patch GRUB script and insert SP11 dtb
+	# Install pacman hook to patch GRUB script and insert SP11 dtb, and fixup Wi-Fi firmware
 	cp -r hooks build/root/etc/pacman.d/
 
 	# Chroot into Arch Linux and install some useful tools
 	chroot build/root /bin/bash <<-'EOF'
 		set -e
-
-		BDENCODER_URL=https://raw.githubusercontent.com/qca/qca-swiss-army-knife/refs/heads/master/tools/scripts/ath12k/ath12k-bdencoder
 
 		mv /etc/resolv.conf{,.bak}
 		echo "nameserver 1.1.1.1" > /etc/resolv.conf
@@ -145,18 +143,6 @@ function arch_setup {
 		exit
 
 		pacman -Scc --noconfirm
-
-		# Wi-Fi firmware fixup: extract a compatible board file from board-2.bin and copy it to board.bin.
-		# ath12k seems to try to load board.bin (single board file) if present, then board-2.bin (bundle of multiple board files and associated device IDs)
-		# Current linux-firmware package's board-2.bin does not contain a matching device ID for SP11.
-		# On SP11 ath12k wants: bus=pci,vendor=17cb,device=1107,subsystem-vendor=17cb,subsystem-device=1107,qmi-chip-id=2,qmi-board-id=255
-		# This seems close enough: bus=pci,vendor=17cb,device=1107,subsystem-vendor=17cb,subsystem-device=3378,qmi-chip-id=2,qmi-board-id=255.bin
-		tmp=$(mktemp -d)
-		pushd "$tmp"
-		python <(curl -sL "$BDENCODER_URL") --extract /lib/firmware/ath12k/WCN7850/hw2.0/board-2.bin
-		mv "bus=pci,vendor=17cb,device=1107,subsystem-vendor=17cb,subsystem-device=3378,qmi-chip-id=2,qmi-board-id=255.bin" /lib/firmware/ath12k/WCN7850/hw2.0/board.bin
-		popd
-		rm -rf "$tmp"
 
 		# Wi-Fi setup with iwd/ath12k bug workaround: https://bugzilla.kernel.org/show_bug.cgi?id=218733
 		mkdir /etc/iwd
