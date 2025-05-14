@@ -131,23 +131,6 @@ function arch_setup {
 		pacman -U --noconfirm linux-firmware-20250408.c1a774f3-1-any.pkg.tar.zst
 		rm linux-firmware-20250408.c1a774f3-1-any.pkg.tar.zst
 
-		# Give wheel users (i.e. alarm) no-password sudo access otherwise makepkg won't work
-		sed -i 's/^#\s*%wheel\s*ALL=(ALL:ALL)\s*NOPASSWD: ALL/%wheel ALL=(ALL:ALL) NOPASSWD: ALL/' /etc/sudoers
-
-		# Install dislocker from AUR (used for extracting firmware)
-		su alarm
-			tmp=$(mktemp -d)
-			git clone https://aur.archlinux.org/dislocker-git.git "$tmp/dislocker"
-			pushd "$tmp/dislocker"
-
-			# Add missing aarch64 architecture
-			sed -i "s/arch=(/arch=('aarch64' /" PKGBUILD
-			
-			makepkg -si --noconfirm
-			popd
-			rm -rf "$tmp"
-		exit
-
 		pacman -Scc --noconfirm
 
 		# Wi-Fi setup with iwd/ath12k bug workaround: https://bugzilla.kernel.org/show_bug.cgi?id=218733
