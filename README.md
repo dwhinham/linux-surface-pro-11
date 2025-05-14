@@ -111,7 +111,7 @@ Firmware blobs that cannot be distributed here are needed from the stock Windows
 
 Two scripts are included for firmware extraction:
 
-- [`sp11-grab-fw.sh`](sp11-grab-fw.sh) is installed into `/usr/local/sbin/sp11-grab-fw`. Run `sp11-grab-fw` from Arch Linux, and it will try download firmware from GitHub. Alternatively, pass the `--win` option to mount your Windows partition and automatically copy the firmware files into the right place. **Note that it will disable the aDSP firmware by appending `.disabled` to the destination file name if it detects that you have booted from USB.**
+- [`sp11-grab-fw.sh`](sp11-grab-fw.sh) is installed into `/usr/local/sbin/sp11-grab-fw`. Run `sp11-grab-fw` from Arch Linux, and it will try download firmware from GitHub. Alternatively, install `dislocker-git` from the AUR, then pass the `--win` option to mount your Windows partition and automatically copy the firmware files into the right place. **Note that it will disable the aDSP firmware by appending `.disabled` to the destination file name if it detects that you have booted from USB.**
 - [`sp11-grab-fw.bat`](sp11-grab-fw.bat) is included on the disk image's FAT partition which you can run from Windows. This will collect all the firmware into a `firmware` folder on the root of the flash drive.
 From Linux, you can then mount the EFI partition and copy the firmware to your system (e.g. `mount /dev/sda1 /mnt/efi; cp -r /mnt/efi/firmware/* /lib/firmware/`). **However, see the note below about aDSP.**
 
