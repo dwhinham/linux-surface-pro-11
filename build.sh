@@ -177,7 +177,7 @@ function build_kernel {
 		export INSTALL_PATH=../boot
 		export INSTALL_MOD_PATH=../modules
 
-		make -C build/linux-sp11 -j12
+		make -C build/linux-sp11 -j$(nproc)
 		make -C build/linux-sp11 modules_install
 		make -C build/linux-sp11 dtbs_install
 		make -C build/linux-sp11 zinstall
