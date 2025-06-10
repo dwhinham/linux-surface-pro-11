@@ -9,7 +9,7 @@ DISK_IMAGE_SIZE_MB=6144
 KERNEL_GIT_REPO=https://github.com/dwhinham/kernel-surface-pro-11
 KERNEL_GIT_BRANCH=wip/x1e80100-6.15-sp11
 
-KERNEL_BASE_CONFIG_URL=https://raw.githubusercontent.com/archlinuxarm/PKGBUILDs/master/core/linux-aarch64-rc/config
+KERNEL_BASE_CONFIG_URL=https://raw.githubusercontent.com/archlinuxarm/PKGBUILDs/master/core/linux-aarch64/config
 
 function check_root {
 	if [ "$EUID" -ne 0 ]; then
