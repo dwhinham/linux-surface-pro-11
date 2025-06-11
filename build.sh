@@ -125,12 +125,6 @@ function arch_setup {
 			sudo \
 			terminus-font
 
-		# Temporary hack to downgrade linux-firmware as ath12k is broken after 20250408
-		# https://www.reddit.com/r/archlinux/comments/1kja6f9/ath12k_regression_on_latest_linuxfirmware_upgrade/
-		curl -Lo linux-firmware-20250408.c1a774f3-1-any.pkg.tar.zst https://archive.archlinux.org/packages/l/linux-firmware/linux-firmware-20250408.c1a774f3-1-any.pkg.tar.zst
-		pacman -U --noconfirm linux-firmware-20250408.c1a774f3-1-any.pkg.tar.zst
-		rm linux-firmware-20250408.c1a774f3-1-any.pkg.tar.zst
-
 		pacman -Scc --noconfirm
 
 		# Wi-Fi setup with iwd/ath12k bug workaround: https://bugzilla.kernel.org/show_bug.cgi?id=218733
