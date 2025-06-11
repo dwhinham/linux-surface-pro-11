@@ -7,10 +7,13 @@ The [kernel tree can be found here](https://github.com/dwhinham/kernel-surface-p
 
 ## What's working
 
+> [!WARNING]
+> The test model is a Surface Pro 11, OLED version, Wi-Fi only (no 5G), with X1E SoC. If you have a different model (e.g. LCD screen, 5G, X1P CPU) then you're on your own.
+
 | **Feature**               | **Working?** | **Notes**                                                                                                                                                  |
 |---------------------------|:------------:|------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | NVMe                      |       ✅      |                                                                                                                                                            |
-| Graphics                  |       ✅      | Haven't tested 3D acceleration properly yet, but Hyprland works.                                                                                           |
+| Graphics                  |       ✅      | 3D acceleration for X1E SoCs only; X1P support is on its way from upstream[^1][^2].                                                                        |
 | Backlight                 |       ✅      | Can be adjusted via `/sys/class/backlight/dp_aux_backlight/brightness`                                                                                     |
 | USB                       |   Partially  | USB-C ports are working, but Surface Dock connector is presumably not.                                                                                      |
 | USB-C display output      |       ✅      | Working as of 6.15-rc6.                                                                                                                                    |
@@ -79,7 +82,7 @@ The [kernel](https://github.com/dwhinham/kernel-surface-pro-11) is based on [@jh
 
   For some reason the DPCD (DisplayPort Configuration Data) contains a zero where a maximum link rate is expected, causing the panel to fail to probe. This patch is an ugly hack which simply hardcodes it to what it should be.
 
-  Some kind of device tree-based override mechanism is probably needed to fix this cleanly, in the same way EDIDs can be overridden[^1].
+  Some kind of device tree-based override mechanism is probably needed to fix this cleanly, in the same way EDIDs can be overridden[^3].
 
 - [arm64: dts: qcom: add support for Surface Pro 11](https://github.com/dwhinham/kernel-surface-pro-11/commit/525e08bb6ae3e05d6823979e90eb64c501f16851)
 
@@ -130,4 +133,6 @@ From Linux, you can then mount the EFI partition and copy the firmware to your s
 
 Many thanks to those who helped with my questions on `#aarch64-laptops`!
 
-[^1]: https://oftc.irclog.whitequark.org/aarch64-laptops/2025-01-21#1737478369-1737481210;
+[^1]: https://lore.kernel.org/dri-devel/20250607-x1p-adreno-v1-0-a8ea80f3b18b@oss.qualcomm.com/T/#u
+[^2]: https://www.phoronix.com/news/Adreno-X1-45-GPU-Linux
+[^3]: https://oftc.irclog.whitequark.org/aarch64-laptops/2025-01-21#1737478369-1737481210;
