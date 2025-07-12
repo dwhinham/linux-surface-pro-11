@@ -114,7 +114,6 @@ function arch_setup {
 
 	pacman-key --init
 	pacman-key --populate archlinuxarm
-	pacman -D --asexplicit linux-firmware mkinitcpio
 	pacman -Rcnus --noconfirm linux-aarch64
 	pacman -Syu --noconfirm \
 			base-devel \
@@ -131,7 +130,7 @@ function arch_setup {
 			efibootmgr \
 			dosfstools \
 			vim
-        # install kernel and headers
+	# install kernel and headers
 	pacman --noconfirm -U /var/cache/pacman/pkg/linux-aarch64-jhovold-*-aarch64.pkg.tar.xz
 
 	# Wi-Fi setup with iwd/ath12k bug workaround: https://bugzilla.kernel.org/show_bug.cgi?id=218733
