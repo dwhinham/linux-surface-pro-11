@@ -28,7 +28,6 @@ function check_tools {
 		mkfs.fat
 		partprobe
 		sfdisk
-		makepkg
 	)
 
 	for tool in ${tools[@]}; do
