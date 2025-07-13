@@ -4,7 +4,7 @@ set -e
 
 ROOTFS_URL=http://os.archlinuxarm.org/os/ArchLinuxARM-aarch64-latest.tar.gz
 DISK_IMAGE_NAME=arch-linux-arm-sp11.img
-DISK_IMAGE_SIZE_MB=14336
+DISK_IMAGE_SIZE_MB=9216
 
 function check_root {
 	if [ "$EUID" -ne 0 ]; then
@@ -127,6 +127,9 @@ function arch_setup {
 			dosfstools \
 			vim
 
+  # clean-up package cache  
+  pacman -Scc --noconfirm
+
 	# Wi-Fi setup with iwd/ath12k bug workaround: https://bugzilla.kernel.org/show_bug.cgi?id=218733
 	mkdir /etc/iwd
 	cat <<-EOF2 > /etc/iwd/main.conf
@@ -139,23 +142,20 @@ function arch_setup {
 
 	# prepare initramfs config
 	sed -i 's/^MODULES=().*$/MODULES=(tcsrcc-x1e80100 phy-qcom-qmp-pcie phy-qcom-qmp-usb phy-qcom-qmp-usbc phy-qcom-eusb2-repeater phy-qcom-snps-eusb2 phy-qcom-qmp-combo surface-hid surface-aggregator surface-aggregator-registry surface-aggregator-hub)/' /etc/mkinitcpio.conf
-	
+
 	# build and install kernel
 	chown -R alarm:alarm /home/alarm/linux-aarch64-jhovold
   echo "%wheel ALL=(ALL:ALL) NOPASSWD: ALL" > /etc/sudoers.d/wheel
   sed -i "/^#MAKEFLAGS/c\MAKEFLAGS=\"-j$(nproc)\"" /etc/makepkg.conf
 	DIR=$(pwd)
 	cd /home/alarm/linux-aarch64-jhovold
-	su -c "makepkg --noconfirm -sci" alarm
+  su -c "makepkg --noconfirm -sci" alarm
 	cd $DIR
 
 	# install bootloader
 	sed -i 's/^GRUB_CMDLINE_LINUX_DEFAULT=.*/GRUB_CMDLINE_LINUX_DEFAULT="clk_ignore_unused pd_ignore_unused loglevel=7"/' /etc/default/grub
 	grub-install --target=arm64-efi --efi-directory=/boot/efi --removable
 	grub-mkconfig > /boot/grub/grub.cfg
-
-	# clean-up package cache	
-	pacman -Scc --noconfirm
 
 	EOF
 }
