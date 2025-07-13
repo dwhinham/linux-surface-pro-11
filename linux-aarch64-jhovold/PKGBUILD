@@ -8,12 +8,10 @@ pkgname=(
   "${pkgbase}-headers"
 )
 pkgver='6.15.4'
-pkgrel=1
+pkgrel=2
 arch=('aarch64')
 url="https://github.com/dwhinham/kernel-surface-pro-11"
 _git_branch=wip/x1e80100-6.15-sp11
-_git_tag=2025-03-30
-_git_commit_hash=5153b37f67daa8d2b7166ccee3880ea7e7bdebc8
 license=('GPL2')
 makedepends=( # Since we don't build the doc, most of the makedeps for other linux packages are not needed here
   'kmod' 'bc' 'dtc' 'python'
@@ -21,8 +19,8 @@ makedepends=( # Since we don't build the doc, most of the makedeps for other lin
 options=(!strip)
 _srcname="linux-${pkgver}"
 source=(
-  "https://raw.githubusercontent.com/archlinuxarm/PKGBUILDs/${_git_commit_hash}/core/linux-aarch64/config"
-  "https://raw.githubusercontent.com/dwhinham/linux-surface-pro-11/refs/tags/${_git_tag}/kernel_config_fragment"
+  "config"
+  "kernel_config_fragment"
 )
 sha256sums=('78acc773f4aac63275c4aa26c68697f3ee2193f3d211f0ff971010ba5a18c69a'
             'eb1538859dce3d90740e4e3abc84a5073c6481826f2272d373161475268f02c3')

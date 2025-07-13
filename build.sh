@@ -4,9 +4,7 @@ set -e
 
 ROOTFS_URL=http://os.archlinuxarm.org/os/ArchLinuxARM-aarch64-latest.tar.gz
 DISK_IMAGE_NAME=arch-linux-arm-sp11.img
-DISK_IMAGE_SIZE_MB=6144
-
-KERNEL_PACKAGE_VERSION=6.15.4-1
+DISK_IMAGE_SIZE_MB=14336
 
 function check_root {
 	if [ "$EUID" -ne 0 ]; then
@@ -92,9 +90,8 @@ function arch_setup {
 
 	cp sp11-grab-fw.bat build/root/boot/efi/
 
-	# Copy kernel, headers and firmware copy script
-	cp linux-aarch64-jhovold/linux-aarch64-jhovold-${KERNEL_PACKAGE_VERSION}-aarch64.pkg.tar.xz build/root/var/cache/pacman/pkg/
-	cp linux-aarch64-jhovold/linux-aarch64-jhovold-headers-${KERNEL_PACKAGE_VERSION}-aarch64.pkg.tar.xz build/root/var/cache/pacman/pkg/
+	# Copy kernel source package and firmware copy script
+	cp -r linux-aarch64-jhovold build/root/home/alarm
 	cp sp11-grab-fw.sh build/root/usr/local/sbin/sp11-grab-fw
 
 	# Install pacman hook to patch GRUB script and insert SP11 dtb, and fixup Wi-Fi firmware
@@ -114,7 +111,7 @@ function arch_setup {
 
 	pacman-key --init
 	pacman-key --populate archlinuxarm
-	pacman -Rcnus --noconfirm linux-aarch64
+	pacman -R --noconfirm linux-aarch64
 	pacman -Syu --noconfirm \
 			base-devel \
 			cabextract \
@@ -130,8 +127,6 @@ function arch_setup {
 			efibootmgr \
 			dosfstools \
 			vim
-	# install kernel and headers
-	pacman --noconfirm -U /var/cache/pacman/pkg/linux-aarch64-jhovold-*-aarch64.pkg.tar.xz
 
 	# Wi-Fi setup with iwd/ath12k bug workaround: https://bugzilla.kernel.org/show_bug.cgi?id=218733
 	mkdir /etc/iwd
@@ -143,22 +138,27 @@ function arch_setup {
 
 	systemctl enable iwd
 
+	# prepare initramfs config
 	sed -i 's/^MODULES=().*$/MODULES=(tcsrcc-x1e80100 phy-qcom-qmp-pcie phy-qcom-qmp-usb phy-qcom-qmp-usbc phy-qcom-eusb2-repeater phy-qcom-snps-eusb2 phy-qcom-qmp-combo surface-hid surface-aggregator surface-aggregator-registry surface-aggregator-hub)/' /etc/mkinitcpio.conf
-	sed -i 's/^GRUB_CMDLINE_LINUX_DEFAULT=.*/GRUB_CMDLINE_LINUX_DEFAULT="clk_ignore_unused pd_ignore_unused loglevel=7"/' /etc/default/grub
+	
+	# build and install kernel
+	chown -R alarm:alarm /home/alarm/linux-aarch64-jhovold
+  echo "%wheel ALL=(ALL:ALL) NOPASSWD: ALL" > /etc/sudoers.d/wheel
+  sed -i "/^#MAKEFLAGS/c\MAKEFLAGS=\"-j$(nproc)\"" /etc/makepkg.conf
+	DIR=$(pwd)
+	cd /home/alarm/linux-aarch64-jhovold
+	su -c "makepkg --noconfirm -sci" alarm
+	cd $DIR
 
+	# install bootloader
+	sed -i 's/^GRUB_CMDLINE_LINUX_DEFAULT=.*/GRUB_CMDLINE_LINUX_DEFAULT="clk_ignore_unused pd_ignore_unused loglevel=7"/' /etc/default/grub
 	grub-install --target=arm64-efi --efi-directory=/boot/efi --removable
 	grub-mkconfig > /boot/grub/grub.cfg
 
-	EOF
-}
+	# clean-up package cache	
+	pacman -Scc --noconfirm
 
-function build_kernel {
-	local DIR=$(pwd)
-	cd linux-aarch64-jhovold
-	if [ ! -f "linux-aarch64-jhovold-${KERNEL_PACKAGE_VERSION}-aarch64.pkg.tar.xz" ]; then
-		su -c "makepkg -Cfs" alarm
-	fi
-	cd $DIR
+	EOF
 }
 
 check_root
@@ -166,8 +166,6 @@ check_arch
 check_tools
 
 create_dirs
-build_kernel
-
 get_rootfs
 prepare_disk_image
 attach_and_mount

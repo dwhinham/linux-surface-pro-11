@@ -1,6 +1,6 @@
 pkgbase = linux-aarch64-jhovold
 	pkgver = 6.15.4
-	pkgrel = 1
+	pkgrel = 2
 	url = https://github.com/dwhinham/kernel-surface-pro-11
 	arch = aarch64
 	license = GPL2
@@ -9,8 +9,8 @@ pkgbase = linux-aarch64-jhovold
 	makedepends = dtc
 	makedepends = python
 	options = !strip
-	source = https://raw.githubusercontent.com/archlinuxarm/PKGBUILDs/5153b37f67daa8d2b7166ccee3880ea7e7bdebc8/core/linux-aarch64/config
-	source = https://raw.githubusercontent.com/dwhinham/linux-surface-pro-11/refs/tags/2025-03-30/kernel_config_fragment
+	source = config
+	source = kernel_config_fragment
 	sha256sums = 78acc773f4aac63275c4aa26c68697f3ee2193f3d211f0ff971010ba5a18c69a
 	sha256sums = eb1538859dce3d90740e4e3abc84a5073c6481826f2272d373161475268f02c3
 
