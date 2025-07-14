@@ -3,7 +3,10 @@
 These are my notes for getting [Arch Linux ARM](https://archlinuxarm.org) booting on the Microsoft Surface Pro 11.
 The [kernel tree can be found here](https://github.com/dwhinham/kernel-surface-pro-11).
 
-**Disclaimer:** I have no experience with upstreaming patches, the patch review process, Linux coding conventions, etc. **at all**, so for now I'm just documenting everything here in the hope that more knowledgable people can help!
+> [!NOTE]
+> Efforts to upstream a kernel patch set are now underway: https://lore.kernel.org/all/20250714173554.14223-1-daleyo@gmail.com/
+> 
+> Also see [Issue #12](https://github.com/dwhinham/linux-surface-pro-11/issues/12).
 
 ## What's working
 
@@ -15,15 +18,16 @@ The [kernel tree can be found here](https://github.com/dwhinham/kernel-surface-p
 | NVMe                      |       ✅      |                                                                                                                                                            |
 | Graphics                  |       ✅      | 3D acceleration for X1E SoCs only; X1P support is on its way from upstream[^1][^2].                                                                        |
 | Backlight                 |       ✅      | Can be adjusted via `/sys/class/backlight/dp_aux_backlight/brightness`                                                                                     |
-| USB                       |   Partially  | USB-C ports are working, but Surface Dock connector is presumably not.                                                                                      |
-| USB-C display output      |       ✅      | Working as of 6.15-rc6.                                                                                                                                    |
+| USB3                      |   Partially  | USB-C ports are working, but Surface Dock connector is presumably not.                                                                                      |
+| USB4/Thunderbolt          |       ❌      | No external display output when using [official USB4 dock](https://learn.microsoft.com/en-us/surface/surface-usb4-dock).                                   |
+| USB-C display output      |       ✅      | Working as of 6.15-rc6 (for DP alt mode).                                                                                                                  |
 | Wi-Fi                     |       ✅      | Working with a [kernel hack to disable rfkill](https://github.com/dwhinham/kernel-surface-pro-11/commit/fcc769be9eaa9823d55e98a28402104621fa6784).         |
 | Bluetooth                 |       ✅      | Requires some `udev` rules to set up a valid MAC address, see [Debian wiki](https://wiki.debian.org/InstallingDebianOn/Thinkpad/X13s#Wi-Fi_and_Bluetooth). |
 | Audio                     |       ❌      | Should be similar to Surface Laptop 7.                                                                                                                     |
 | Touchscreen               |       ❌      |                                                                                                                                                            |
 | Pen                       |       ❌      |                                                                                                                                                            |
 | Flex Keyboard             |       ✅      | Only when attached to the Surface Pro; not sure about Bluetooth yet.                                                                                       |
-| Lid switch/suspend        |       ✅      | Seems to be working.                                                                                                                                       |
+| Suspend/resume            |   Partially  | Lid switch seems to be working when Flex Keyboard covers screen. Resume from sleep can cause machine to hang or produce a black screen.                     |
 | Cameras (and status LEDs) |       ❌      |                                                                                                                                                            |
 
 ## Arch Linux ARM disk image
@@ -131,7 +135,8 @@ From Linux, you can then mount the EFI partition and copy the firmware to your s
 
 ### Thanks
 
-Many thanks to those who helped with my questions on `#aarch64-laptops`!
+Many thanks to those who helped with my questions on `#aarch64-laptops`!<br />
+Additional thanks to @JeromeDeBretagne for assistance with upstream submission and patch contributions.
 
 [^1]: https://lore.kernel.org/dri-devel/20250607-x1p-adreno-v1-0-a8ea80f3b18b@oss.qualcomm.com/T/#u
 [^2]: https://www.phoronix.com/news/Adreno-X1-45-GPU-Linux
