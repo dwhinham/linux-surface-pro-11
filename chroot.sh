@@ -51,8 +51,8 @@ function arch_chroot {
 	mount -t sysfs /sys build/root/sys/
 	mount --bind /dev build/root/dev/
 	mount --bind /dev/pts build/root/dev/pts/
-	mkdir -p build/root/mnt/efi
-	mount ${loopdev}p1 build/root/mnt/efi
+	mkdir -p build/root/boot/efi
+	mount ${loopdev}p1 build/root/boot/efi
 
 	# Chroot into Arch Linux
 	chroot build/root /bin/bash

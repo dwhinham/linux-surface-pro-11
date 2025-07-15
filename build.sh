@@ -4,12 +4,7 @@ set -e
 
 ROOTFS_URL=http://os.archlinuxarm.org/os/ArchLinuxARM-aarch64-latest.tar.gz
 DISK_IMAGE_NAME=arch-linux-arm-sp11.img
-DISK_IMAGE_SIZE_MB=6144
-
-KERNEL_GIT_REPO=https://github.com/dwhinham/kernel-surface-pro-11
-KERNEL_GIT_BRANCH=wip/x1e80100-6.15-sp11
-
-KERNEL_BASE_CONFIG_URL=https://raw.githubusercontent.com/archlinuxarm/PKGBUILDs/master/core/linux-aarch64/config
+DISK_IMAGE_SIZE_MB=9216
 
 function check_root {
 	if [ "$EUID" -ne 0 ]; then
@@ -77,6 +72,7 @@ function attach_and_mount {
 }
 
 function unmount_and_detach {
+	chroot build/root /bin/bash -c "killall -wv gpg-agent"
 	umount --recursive --detach-loop build/root
 	echo Disk image at $loopdev detached
 }
@@ -88,14 +84,13 @@ function arch_setup {
 	mount -t sysfs /sys build/root/sys/
 	mount --bind /dev build/root/dev/
 	mount --bind /dev/pts build/root/dev/pts/
-	mkdir -p build/root/mnt/efi
-	mount ${loopdev}p1 build/root/mnt/efi
+	mkdir -p build/root/boot/efi
+	mount ${loopdev}p1 build/root/boot/efi
 
-	cp sp11-grab-fw.bat build/root/mnt/efi/
+	cp sp11-grab-fw.bat build/root/boot/efi/
 
-	# Copy kernel, modules, dtbs and firmware copy script
-	cp -r build/boot/* build/root/boot/
-	cp -r build/modules/lib/modules/* build/root/lib/modules/
+	# Copy kernel source package and firmware copy script
+	cp -r linux-aarch64-jhovold build/root/home/alarm
 	cp sp11-grab-fw.sh build/root/usr/local/sbin/sp11-grab-fw
 
 	# Install pacman hook to patch GRUB script and insert SP11 dtb, and fixup Wi-Fi firmware
@@ -103,16 +98,20 @@ function arch_setup {
 
 	# Chroot into Arch Linux and install some useful tools
 	chroot build/root /bin/bash <<-'EOF'
-		set -e
+	set -e
 
-		mv /etc/resolv.conf{,.bak}
-		echo "nameserver 1.1.1.1" > /etc/resolv.conf
+	mv /etc/resolv.conf{,.bak}
+	echo "nameserver 1.1.1.1" > /etc/resolv.conf
 
-		pacman-key --init
-		pacman-key --populate archlinuxarm
-		pacman -D --asexplicit linux-firmware mkinitcpio
-		pacman -Rcnus --noconfirm linux-aarch64
-		pacman -Syu --noconfirm \
+	echo FONT=ter-132n >> /etc/vconsole.conf
+	echo LANG=en_US.UTF-8 >> /etc/locale.conf
+	sed -i '/#en_US.UTF-8/s/^#\(\S.*\)/\1/' /etc/locale.gen
+	locale-gen
+
+	pacman-key --init
+	pacman-key --populate archlinuxarm
+	pacman -R --noconfirm linux-aarch64
+	pacman -Syu --noconfirm \
 			base-devel \
 			cabextract \
 			git \
@@ -123,59 +122,42 @@ function arch_setup {
 			linux-firmware-qcom \
 			python \
 			sudo \
-			terminus-font
+			terminus-font \
+			efibootmgr \
+			dosfstools \
+			vim
 
-		pacman -Scc --noconfirm
+  # clean-up package cache  
+  pacman -Scc --noconfirm
 
-		# Wi-Fi setup with iwd/ath12k bug workaround: https://bugzilla.kernel.org/show_bug.cgi?id=218733
-		mkdir /etc/iwd
-		cat <<-EOF2 > /etc/iwd/main.conf
+	# Wi-Fi setup with iwd/ath12k bug workaround: https://bugzilla.kernel.org/show_bug.cgi?id=218733
+	mkdir /etc/iwd
+	cat <<-EOF2 > /etc/iwd/main.conf
 			[General]
 			EnableNetworkConfiguration=true
 			ControlPortOverNL80211=false
-		EOF2
+	EOF2
 
-		systemctl enable iwd
+	systemctl enable iwd
 
-		echo FONT=ter-132n >> /etc/vconsole.conf
+	# prepare initramfs config
+	sed -i 's/^MODULES=().*$/MODULES=(tcsrcc-x1e80100 phy-qcom-qmp-pcie phy-qcom-qmp-usb phy-qcom-qmp-usbc phy-qcom-eusb2-repeater phy-qcom-snps-eusb2 phy-qcom-qmp-combo surface-hid surface-aggregator surface-aggregator-registry surface-aggregator-hub)/' /etc/mkinitcpio.conf
 
-		sed -i 's/^MODULES=().*$/MODULES=(tcsrcc-x1e80100 phy-qcom-qmp-pcie phy-qcom-qmp-usb phy-qcom-qmp-usbc phy-qcom-eusb2-repeater phy-qcom-snps-eusb2 phy-qcom-qmp-combo surface-hid surface-aggregator surface-aggregator-registry surface-aggregator-hub)/' /etc/mkinitcpio.conf
-		sed -i 's/^GRUB_CMDLINE_LINUX_DEFAULT=.*/GRUB_CMDLINE_LINUX_DEFAULT="clk_ignore_unused pd_ignore_unused loglevel=7"/' /etc/default/grub
+	# build and install kernel
+	chown -R alarm:alarm /home/alarm/linux-aarch64-jhovold
+  echo "%wheel ALL=(ALL:ALL) NOPASSWD: ALL" > /etc/sudoers.d/wheel
+  sed -i "/^#MAKEFLAGS/c\MAKEFLAGS=\"-j$(nproc)\"" /etc/makepkg.conf
+	DIR=$(pwd)
+	cd /home/alarm/linux-aarch64-jhovold
+  su -c "makepkg --noconfirm -sci" alarm
+	cd $DIR
 
-		kernel=$(ls /boot | grep '^vmlinuz')
-		kversion="${kernel#vmlinuz-}"
-		mkinitcpio -k $kversion -g /boot/initramfs-$kversion.img -v
-		grub-install --target=arm64-efi --efi-directory=/mnt/efi --removable
-		grub-mkconfig > /boot/grub/grub.cfg
+	# install bootloader
+	sed -i 's/^GRUB_CMDLINE_LINUX_DEFAULT=.*/GRUB_CMDLINE_LINUX_DEFAULT="clk_ignore_unused pd_ignore_unused loglevel=7"/' /etc/default/grub
+	grub-install --target=arm64-efi --efi-directory=/boot/efi --removable
+	grub-mkconfig > /boot/grub/grub.cfg
 
-		# This process will prevent unmounting after exiting the chroot if it's left dangling
-		killall -wv gpg-agent
 	EOF
-}
-
-function build_kernel {
-	if [ ! -f build/boot/vmlinuz* ]; then
-		git clone $KERNEL_GIT_REPO build/linux-sp11 --single-branch --branch $KERNEL_GIT_BRANCH --depth 1
-
-		# Download base kernel config for Arch Linux ARM
-		curl -Lo build/alarm_base_config $KERNEL_BASE_CONFIG_URL
-
-		./build/linux-sp11/scripts/kconfig/merge_config.sh -O build/linux-sp11 -m \
-				build/alarm_base_config \
-				build/linux-sp11/arch/arm64/configs/johan_defconfig \
-				kernel_config_fragment
-
-		make -C build/linux-sp11 olddefconfig
-
-		mkdir -p build/boot build/modules
-		export INSTALL_PATH=../boot
-		export INSTALL_MOD_PATH=../modules
-
-		make -C build/linux-sp11 -j$(nproc)
-		make -C build/linux-sp11 modules_install
-		make -C build/linux-sp11 dtbs_install
-		make -C build/linux-sp11 zinstall
-	fi
 }
 
 check_root
@@ -183,8 +165,6 @@ check_arch
 check_tools
 
 create_dirs
-build_kernel
-
 get_rootfs
 prepare_disk_image
 attach_and_mount
