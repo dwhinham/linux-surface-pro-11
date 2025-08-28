@@ -23,7 +23,7 @@ The [kernel tree can be found here](https://github.com/dwhinham/kernel-surface-p
 | USB-C display output      |       ✅      | Working as of 6.15-rc6 (for DP alt mode).                                                                                                                  |
 | Wi-Fi                     |       ✅      | Working with a [kernel hack to disable rfkill](https://github.com/dwhinham/kernel-surface-pro-11/commit/fcc769be9eaa9823d55e98a28402104621fa6784).         |
 | Bluetooth                 |       ✅      | Requires some `udev` rules to set up a valid MAC address, see [Debian wiki](https://wiki.debian.org/InstallingDebianOn/Thinkpad/X13s#Wi-Fi_and_Bluetooth). |
-| Audio                     |       ❌      | Should be similar to Surface Laptop 7.                                                                                                                     |
+| Audio                     |   Partially  | Speakers working but can sound distorted; care needed with volume controls. Microphone "working" but too distorted to be usable.                            |
 | Touchscreen               |       ❌      |                                                                                                                                                            |
 | Pen                       |       ❌      |                                                                                                                                                            |
 | Flex Keyboard             |       ✅      | Only when attached to the Surface Pro; not sure about Bluetooth yet.                                                                                       |
@@ -67,7 +67,7 @@ The script performs the following:
 - Downloads and patches kernel source.
 - Builds the kernel, modules and DTBs.
 - Downloads the generic AArch64 Arch Linux ARM root filesystem tarball.
-- Creates a 4GB disk image and partitions it into a 512MB FAT32 EFI partition and a 3.5GB ext4 root partition.
+- Creates a 6GB disk image and partitions it into a 512MB FAT32 EFI partition and a 5.5GB ext4 root partition.
 - Mounts the partitions and extracts the root filesystem.
 - Installs our kernel and DTBs into `/boot`.
 - Chroots into the rootfs, updates `pacman`, removes the stock kernel and installs firmware and GRUB packages.
@@ -78,7 +78,7 @@ The script performs the following:
 
 ## Kernel
 
-The [kernel](https://github.com/dwhinham/kernel-surface-pro-11) is based on [@jhovold's X1E80100 kernel](https://github.com/jhovold/linux), which contains many bleeding-edge patches for machines using Qualcomm X1E SoCs.
+The [kernel](https://github.com/dwhinham/kernel-surface-pro-11) is based on mainline as of v6.17.
 
 ### Notable patches
 
@@ -106,7 +106,7 @@ The [kernel](https://github.com/dwhinham/kernel-surface-pro-11) is based on [@jh
 
 ### Device tree
 
-The [device tree](https://github.com/dwhinham/kernel-surface-pro-11/blob/wip/x1e80100-6.15-rc6-sp11/arch/arm64/boot/dts/qcom/x1e80100-microsoft-denali.dts) is mostly based on the [Surface Laptop 7](https://github.com/torvalds/linux/blob/master/arch/arm64/boot/dts/qcom/x1e80100-microsoft-romulus.dtsi) and [Qualcomm CRD](https://github.com/torvalds/linux/blob/master/arch/arm64/boot/dts/qcom/x1e80100-crd.dts) device trees as they share many similarities.
+The [device tree](https://github.com/dwhinham/kernel-surface-pro-11/blob/-/arch/arm64/boot/dts/qcom/x1e80100-microsoft-denali.dts) is mostly based on the [Surface Laptop 7](https://github.com/torvalds/linux/blob/master/arch/arm64/boot/dts/qcom/x1e80100-microsoft-romulus.dtsi) and [Qualcomm CRD](https://github.com/torvalds/linux/blob/master/arch/arm64/boot/dts/qcom/x1e80100-crd.dts) device trees as they share many similarities.
 
 The values for the regulators in the `apps_rsc` section were found by scraping the [DSDT dump](https://github.com/aarch64-laptops/build/blob/master/misc/microsoft-surface-pro-11/acpi/dsdt.dsl) and looking for the sections that contain `PMICVREGVOTE`.
 

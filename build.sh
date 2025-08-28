@@ -7,9 +7,14 @@ DISK_IMAGE_NAME=arch-linux-arm-sp11.img
 DISK_IMAGE_SIZE_MB=6144
 
 KERNEL_GIT_REPO=https://github.com/dwhinham/kernel-surface-pro-11
-KERNEL_GIT_BRANCH=wip/x1e80100-6.15-sp11
+KERNEL_GIT_BRANCH=wip/x1e80100-6.17-rc3-sp11
 
-KERNEL_BASE_CONFIG_URL=https://raw.githubusercontent.com/archlinuxarm/PKGBUILDs/master/core/linux-aarch64/config
+# If "rc" in the branch name then take the config from the ALARM -rc package
+if [[ $KERNEL_GIT_BRANCH == *rc* ]]; then
+	KERNEL_BASE_CONFIG_URL=https://raw.githubusercontent.com/archlinuxarm/PKGBUILDs/master/core/linux-aarch64-rc/config
+else
+	KERNEL_BASE_CONFIG_URL=https://raw.githubusercontent.com/archlinuxarm/PKGBUILDs/master/core/linux-aarch64/config
+fi
 
 function check_root {
 	if [ "$EUID" -ne 0 ]; then
@@ -138,7 +143,7 @@ function arch_setup {
 
 		echo FONT=ter-132n >> /etc/vconsole.conf
 
-		sed -i 's/^MODULES=().*$/MODULES=(tcsrcc-x1e80100 phy-qcom-qmp-pcie phy-qcom-qmp-usb phy-qcom-qmp-usbc phy-qcom-eusb2-repeater phy-qcom-snps-eusb2 phy-qcom-qmp-combo surface-hid surface-aggregator surface-aggregator-registry surface-aggregator-hub)/' /etc/mkinitcpio.conf
+		sed -i 's/^MODULES=().*$/MODULES=(tcsrcc-x1e80100 phy-qcom-qmp-pcie phy-qcom-qmp-usb phy-qcom-qmp-usbc phy-qcom-eusb2-repeater phy-snps-eusb2 phy-qcom-qmp-combo surface-hid surface-aggregator surface-aggregator-registry surface-aggregator-hub)/' /etc/mkinitcpio.conf
 		sed -i 's/^GRUB_CMDLINE_LINUX_DEFAULT=.*/GRUB_CMDLINE_LINUX_DEFAULT="clk_ignore_unused pd_ignore_unused loglevel=7"/' /etc/default/grub
 
 		kernel=$(ls /boot | grep '^vmlinuz')
@@ -161,7 +166,6 @@ function build_kernel {
 
 		./build/linux-sp11/scripts/kconfig/merge_config.sh -O build/linux-sp11 -m \
 				build/alarm_base_config \
-				build/linux-sp11/arch/arm64/configs/johan_defconfig \
 				kernel_config_fragment
 
 		make -C build/linux-sp11 olddefconfig
@@ -170,7 +174,7 @@ function build_kernel {
 		export INSTALL_PATH=../boot
 		export INSTALL_MOD_PATH=../modules
 
-		make -C build/linux-sp11 -j$(nproc)
+		make LOCALVERSION= -C build/linux-sp11 -j$(nproc)
 		make -C build/linux-sp11 modules_install
 		make -C build/linux-sp11 dtbs_install
 		make -C build/linux-sp11 zinstall
