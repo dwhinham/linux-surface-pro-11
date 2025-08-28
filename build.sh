@@ -127,12 +127,11 @@ function arch_setup {
 
 		pacman -Scc --noconfirm
 
-		# Wi-Fi setup with iwd/ath12k bug workaround: https://bugzilla.kernel.org/show_bug.cgi?id=218733
+		# Allow iwd to handle DHCP and routing setup
 		mkdir /etc/iwd
 		cat <<-EOF2 > /etc/iwd/main.conf
 			[General]
 			EnableNetworkConfiguration=true
-			ControlPortOverNL80211=false
 		EOF2
 
 		systemctl enable iwd
